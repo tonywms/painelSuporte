@@ -1,0 +1,15 @@
+.containerLogo {
+    --tw-scale-x: .75;
+    --tw-scale-y: .75;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+    scale: .75;
+    width: 30%;
+    height: 8vh;
+    display: flex;
+    align-items: center;
+    padding: 8px;
+}
+
+.logo {
+    filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04))
+}

@@ -1,0 +1,60 @@
+
+.containerConferido {
+    width: 40%;
+}
+
+.titleConferido {
+    width: 100%;
+    background-color: #123;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    min-height: 60px;
+    height: 10%;
+    box-shadow: 2px 3px 5px rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+.Title {
+    color: #fff;
+    font-weight: 600;
+    
+}
+
+.containerElementsFinalizados {
+    height: 80%;
+    overflow-y: auto;
+    width: 100%;
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+}
+
+@media (min-width: 1200px){
+    .Title {
+        font-size: 24px;
+        line-height: 32px;
+    }
+
+    .ElementFinalizado {
+        font-size: 24px;
+        line-height: 32px;
+    }
+}
+
+.ElementFinalizado {
+    display: grid;
+    grid-template-columns: 30% 70%;
+    gap: 2px;
+    padding: 4px;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 28px;
+    height: 32px;
+    width: 100%;
+    color: #188ABD;
+}
+
+.ElementFinalizado div {
+    overflow-y: hidden;
+}
