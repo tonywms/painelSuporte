@@ -11,7 +11,7 @@ export default function Main() {
     async function getDados() {
         let local = localStorage.getItem('dados');
         if (local != '' || undefined && local != null) {
-            axios.get('http://192.168.4.218:3000/pedidosf14').
+            axios.get('http://192.168.0.3:3000/pedidosf14').
             then(data => data.data?.filter((dados) => dados.Situacao === 'Retirar' ? false : true)).
             then(data => (setDados(data), console.log(data))).catch(err => console.log(err))
         }
@@ -32,7 +32,6 @@ export default function Main() {
         <div className={style.layout}>
             <Tabela dados={dados} />
             <Conferidos dados={dados} />
-            {/* <ListCall dados={dados}/> */}
             <section className={style.containerCounter}>
                 <section className={style.boxCounter}>
                     <label htmlFor="">Em Separação</label>&nbsp;&nbsp;

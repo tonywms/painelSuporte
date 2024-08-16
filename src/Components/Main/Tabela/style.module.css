@@ -6,7 +6,14 @@
 
 .containerHeader {
     display: grid;
-    grid-template-columns: 20% 15% 15% 50%;
+    
+    grid-template-columns: 
+    minmax(max-content, 20%) 
+    minmax(max-content,15%) 
+    minmax(max-content,15%) 
+    minmax(max-content, 25%)
+    minmax(max-content, 25%);
+
     grid-template-rows: 1fr;
     justify-items: left;
     align-items: center;
@@ -35,7 +42,12 @@
 
 .elementTable {
     display: grid;
-    grid-template-columns: 20% 15% 15% 50%;
+    grid-template-columns:
+    minmax(max-content, 20%) 
+    minmax(max-content,15%) 
+    minmax(max-content,15%) 
+    minmax(max-content, 25%)
+    minmax(max-content, 25%);
     border-radius: 6px;
     color: #123;
     font-weight: 600;
