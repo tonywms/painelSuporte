@@ -1,45 +1,96 @@
-import { useState, useEffect } from 'react';
-import Tabela from '../Tabela';
-import Conferidos from '../Conferidos';
-import Call from '../Call';
-import style from './style.module.css';
-import { data } from '../../data'; // Dados mockados para teste
+import { useEffect, useState, useMemo } from 'react';
+import Tabela from './Tabela/index';
+import Conferidos from './Conferidos/index';
+import style from './layout.module.css';
 
 export default function Main() {
-  const [dados, setDados] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState(null);
+    const [tasks, setTasks] = useState([]);
 
-  useEffect(() => {
-    // Opção 1: USAR DADOS MOCKADOS (para teste imediato)
-    setDados(data);
-    setCarregando(false);
+    const fetchData = async () => {
+        try {
+            const response = await fetch('/api/runrun');
+            
+            if (!response.ok) {
+                console.error("A API retornou um erro");
+                return;
+            }
 
-    // Opção 2: BUSCAR DA API (quando a URL estiver correta)
-    /*
-    fetch('https://painel-suporte.vercel.app/api/runrun')
-      .then(res => res.json())
-      .then(data => {
-        setDados(data);
-        setCarregando(false);
-      })
-      .catch(err => {
-        setErro(err.message);
-        setCarregando(false);
-      });
-    */
-  }, []);
+            const data = await response.json();
+            // A API do Runrun.it retorna um Array de objetos
+            setTasks(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error("Erro ao carregar dados da Vercel:", error);
+        }
+    };
 
-  if (carregando) return <div>Carregando...</div>;
-  if (erro) return <div>Erro: {erro}</div>;
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 60000); 
+        return () => clearInterval(interval);
+    }, []);
 
-  return (
-    <main className={style.main}>
-      <div className={style.containerMain}>
-        <Tabela dados={dados} />
-        <Conferidos dados={dados} />
-      </div>
-      <Call dados={dados} />
-    </main>
-  );
+    // Filtros corrigidos seguindo a documentação do Runrun.it:
+    // is_closed: true/false indica se a tarefa foi encerrada
+    // is_running: true/false indica se o "Play" está acionado (em andamento)
+
+    // Dentro do seu Main/index.jsx, substitua os useMemo por estes:
+
+    // Filtra o que NÃO está fechado
+    const ticketsAbertos = useMemo(() => 
+        tasks.filter(t => t.is_closed === false), [tasks]);
+
+    // Filtra o que está com o "Play" (on_going) e não está fechado
+    const ticketsAndamento = useMemo(() => 
+        tasks.filter(t => t.on_going === true && t.is_closed === false), [tasks]);
+
+    // Filtra o que já foi fechado
+    const ticketsFinalizados = useMemo(() => 
+        tasks.filter(t => t.is_closed === true), [tasks]);
+
+    // Filtra o que não está rodando e não está fechado
+    const ticketsAguardando = useMemo(() => 
+        tasks.filter(t => t.on_going === false && t.is_closed === false), [tasks]);
+
+    return (
+        <main className={style.layout}>
+            <div className={style.panelsRow}>
+                <div className={style.column}>
+                    <Tabela dados={ticketsAbertos} />
+                </div>
+                <div className={style.column}>
+                    <Conferidos 
+                        title="Andamento" 
+                        dados={ticketsAndamento} 
+                        gradient="linear-gradient(90deg, #188ABD, #0ea5e9)" 
+                    />
+                </div>
+                <div className={style.column}>
+                    <Conferidos 
+                        title="Finalizados" 
+                        dados={ticketsFinalizados} 
+                        gradient="linear-gradient(90deg, #0f766e, #14b8a6)" 
+                    />
+                </div>
+            </div>
+
+            <div className={style.containerCounter}>
+                <div className={style.boxCounter}>
+                    <label>Tickets Abertos</label>
+                    <div className={style.textCounter} data-aberto>{ticketsAbertos.length}</div>
+                </div>
+                <div className={style.boxCounter}>
+                    <label>Em Andamento</label>
+                    <div className={style.textCounter} data-andamento>{ticketsAndamento.length}</div>
+                </div>
+                <div className={style.boxCounter}>
+                    <label>Aguardando</label>
+                    <div className={style.textCounter} data-aguardando>{ticketsAguardando.length}</div>
+                </div>
+                <div className={style.boxCounter}>
+                    <label>Finalizados</label>
+                    <div className={style.textCounter} data-finalizado>{ticketsFinalizados.length}</div>
+                </div>
+            </div>
+        </main>
+    );
 }
