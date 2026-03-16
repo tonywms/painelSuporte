@@ -1,6 +1,12 @@
 import style from './style.module.css';
 
 export default function Tabela({ dados }) {
+    // Função simples para formatar a data ISO para o padrão brasileiro
+    const formatarData = (dataIso) => {
+        if (!dataIso) return '--';
+        return new Date(dataIso).toLocaleDateString('pt-BR');
+    };
+
     return (
         <div className={style.ContainerTable}>
             <section className={style.containerHeader}>
@@ -21,18 +27,33 @@ export default function Tabela({ dados }) {
             <section className={style.tableBody}>
                 {dados.length > 0 ? dados.map(task => (
                     <div key={task.id} className={style.elementTable}>
+                        {/* Tarefa: usa o campo 'id' */}
                         <div className={style.fontBodyTable}>#{task.id}</div>
+                        
+                        {/* Cliente: usa o campo 'client_name' */}
                         <div className={style.fontBodyTable}>{task.client_name || 'N/A'}</div>
-                        <div className={style.fontBodyTable}>{task.desired_start_date || '--'}</div>
-                        <div className={style.fontBodyTable}>{task.desired_due_date || '--'}</div>
+                        
+                        {/* Início: usa o campo 'created_at' */}
+                        <div className={style.fontBodyTable}>{formatarData(task.created_at)}</div>
+                        
+                        {/* Entrega: usa o campo 'estimated_at' */}
+                        <div className={style.fontBodyTable}>{formatarData(task.estimated_at)}</div>
+                        
+                        {/* Status: usa o campo 'board_stage_name' */}
                         <div className={style.fontBodyTable}>
-                            <span className={task.is_working ? style.statusBadge : ''}>
-                                {task.is_working ? 'Fazendo' : 'A Fazer'}
+                            <span className={task.on_going ? style.statusBadge : ''}>
+                                {task.board_stage_name || (task.on_going ? 'Em Andamento' : 'A Fazer')}
                             </span>
                         </div>
-                        <div className={style.fontBodyTable}>{task.responsible_name || 'Pendente'}</div>
+                        
+                        {/* Usuário: usa o campo 'user_name' */}
+                        <div className={style.fontBodyTable}>{task.user_name || 'Pendente'}</div>
                     </div>
-                )) : <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>Nenhum ticket aberto</div>}
+                )) : (
+                    <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>
+                        Nenhum ticket aberto
+                    </div>
+                )}
             </section>
         </div>
     );
