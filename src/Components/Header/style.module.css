@@ -1,6 +1,45 @@
-.header{
+.header {
+    width: 100%;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+
+.headerContent {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4px;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 18px;
+    border-radius: 16px;
+    background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, 0.95),
+        rgba(2, 6, 23, 0.95)
+    );
+    backdrop-filter: blur(6px);
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.6),
+        inset 0 0 0 1px rgba(148,163,184,0.08);
+}
+
+/* ===== LINHA DE GLOW SUPERIOR ===== */
+
+.headerGlow {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: -2px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        #0ea5e9,
+        #22c55e,
+        #a855f7
+    );
+    opacity: 0.8;
+    filter: blur(2px);
 }

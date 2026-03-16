@@ -24,7 +24,7 @@ export default function ListCall({ dados }) {
                 <section className={style.ClientContainer}>
                     <section>
                         <label>Código Pedido</label>
-                        <div>01231</div>
+                        <div>012231</div>
                     </section>
 
                     <section>

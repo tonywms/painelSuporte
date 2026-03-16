@@ -1,43 +1,26 @@
-import { useEffect } from 'react';
 import style from './style.module.css';
 
-var valorPorCiclo2 = 0;
-
-export default function Conferidos({ dados }) {
-
-    
-    function loop() {
-        let table = document.querySelector('#data-body-conferido');
-        setTimeout(() => {
-            if (table?.scrollHeight - table?.clientHeight <= valorPorCiclo2) {
-                table?.scrollTo({ top: 0, behavior: 'auto' });
-                valorPorCiclo2 = 0;
-            } else {
-                table?.scrollTo({ top: valorPorCiclo2 + 34, behavior: 'smooth' });
-                valorPorCiclo2 = valorPorCiclo2 + 34;
-            }
-            loop();
-        }, 10 * 1000)
-    };
-
-    useEffect(() => { loop() }, []);
-
+export default function Conferidos({ dados, title, gradient }) {
     return (
         <div className={style.containerConferido}>
-            <section className={style.titleConferido}>
-                <h2 className={style.Title}>Pedidos Finalizados</h2>
+            <section className={style.titleConferido} style={{ background: gradient }}>
+                <div className={style.headerTitle}>
+                    {title} <span className={style.badge}>{dados.length}</span>
+                </div>
             </section>
-            <section className={style.containerElementsFinalizados} id="data-body-conferido">
-                {
-                    dados?.filter(pedido => pedido.Situacao == "Finalizado").
-                        sort((a, b) => (a < b.Codpedido) ? -1 : (a > b.Codpedido) ? 1 : 0).
-                        map((pedidos, key) =>
-                            <div key={`k-c-${key}`} className={style.ElementFinalizado}>
-                                <div style={{ borderRightWidth: "2px" }}>{pedidos?.Codpedido}</div>
-                                <div>{pedidos.Cliente}</div>
-                            </div>)
-                }
+
+            <section className={style.containerElementsFinalizados}>
+                {dados.map((task) => (
+                    <div key={task.id} className={style.ElementFinalizado}>
+                        <div className={style.codPedido}>
+                           <div className={style.caixaSquare}></div>
+                           #{task.id}
+                        </div>
+                        <div style={{fontSize: '12px'}}>{task.client_name || 'Cliente'}</div>
+                        <div style={{fontSize: '12px'}}>{task.responsible_name || '---'}</div>
+                    </div>
+                ))}
             </section>
         </div>
-    )
+    );
 }

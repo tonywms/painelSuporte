@@ -1,89 +1,39 @@
-import { useState, useEffect } from 'react';
 import style from './style.module.css';
-import { data } from '../../../data';
 
-var valorPorCiclo = 0;
 export default function Tabela({ dados }) {
-
-    function loop() {
-        let table = document.querySelector('#data-body-tabel');
-
-        setTimeout(() => {
-            if (table?.scrollHeight - table?.clientHeight <= valorPorCiclo) {
-                table?.scrollTo({ top: 0, behavior: 'auto' });
-                valorPorCiclo = 0;
-            } else {
-                table?.scrollTo({ top: valorPorCiclo + 34, behavior: 'smooth' });
-                valorPorCiclo = valorPorCiclo + 34;
-            }
-            loop();
-        }, 10 * 1000)
-    };
-
-
-    useEffect(() => {
-        loop();
-    }, [])
-
-    function Switch(status) {
-        switch (status) {
-            case 'Em Separação':
-                return <div className={style.statusPedido} data-separacao />
-            case 'Aguardando conferencia':
-                return <div className={style.statusPedido} data-aguardando />
-            case 'Conferencia Finalizada':
-                return <div className={style.statusPedido} data-finalizada />
-        }
-    }
-
     return (
         <div className={style.ContainerTable}>
             <section className={style.containerHeader}>
-                <div className={style.fontHeader}>
-                    Status
-                </div>
-                <div className={style.fontHeader}>
-                    Pedido
-                </div>
-                <div className={style.fontHeader}>
-                    Código
-                </div>
-                <div className={style.fontHeader}>
-                    Tempo
-                </div>
-                <div className={style.fontHeader}>
-                    % Sep
+                <div className={style.headerTitle}>
+                    Tickets Abertos <span className={style.badge}>{dados.length}</span>
                 </div>
             </section>
-            <section className={style.tableBody} id="data-body-tabel">
-                {
-                    (data).filter(
-                        (pedido) => pedido.Situacao === 'Finalizado' ? false : true).
-                        sort((a, b) => (a < b.Codpedido) ? -1 : (a > b.Codpedido) ? 1 : 0).
-                        map(
-                            (el, key) =>
-                                <div
-                                    key={`t-k-${key}`}
-                                    className={style.elementTable}
-                                >
-                                    <div className={style.fontBodyTable}>
-                                        {Switch(el.Situacao)}
-                                    </div>
-                                    <div className={style.fontBodyTable}>
-                                        {el.Codpedido}
-                                    </div>
-                                    <div className={style.fontBodyTable}>
-                                        {el.CodCliente}
-                                    </div>
-                                    <div className={style.fontBodyTable}>
-                                        {el.Tempo}
-                                    </div>
-                                    <div className={style.fontBodyTable}>
-                                        {el.PercSep}
-                                    </div>
-                                </div>
-                        )}
+
+            <div className={style.labelsGrid}>
+                <span>Tarefa</span>
+                <span>Cliente</span>
+                <span>Início</span>
+                <span>Entrega</span>
+                <span>Status</span>
+                <span>Usuário</span>
+            </div>
+
+            <section className={style.tableBody}>
+                {dados.length > 0 ? dados.map(task => (
+                    <div key={task.id} className={style.elementTable}>
+                        <div className={style.fontBodyTable}>#{task.id}</div>
+                        <div className={style.fontBodyTable}>{task.client_name || 'N/A'}</div>
+                        <div className={style.fontBodyTable}>{task.desired_start_date || '--'}</div>
+                        <div className={style.fontBodyTable}>{task.desired_due_date || '--'}</div>
+                        <div className={style.fontBodyTable}>
+                            <span className={task.is_working ? style.statusBadge : ''}>
+                                {task.is_working ? 'Fazendo' : 'A Fazer'}
+                            </span>
+                        </div>
+                        <div className={style.fontBodyTable}>{task.responsible_name || 'Pendente'}</div>
+                    </div>
+                )) : <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>Nenhum ticket aberto</div>}
             </section>
         </div>
-    )
+    );
 }

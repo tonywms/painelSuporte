@@ -1,12 +1,15 @@
-import Logo from "./Logo"
-import Title from "./Title"
+import Logo from "./Logo";
+import Title from "./Title";
 import style from './style.module.css';
 
 export default function Header() {
     return (
-        <div className={style.header}>
-            <Logo/>
-            <Title/>
-        </div>
-    )
+        <header className={style.header}>
+            <div className={style.headerContent}>
+                <Logo />
+                <Title />
+            </div>
+            <div className={style.headerGlow} />
+        </header>
+    );
 }
