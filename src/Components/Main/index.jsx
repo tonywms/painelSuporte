@@ -33,19 +33,23 @@ export default function Main() {
     // is_closed: true/false indica se a tarefa foi encerrada
     // is_running: true/false indica se o "Play" está acionado (em andamento)
 
-// No seu arquivo Main/index.jsx, mude APENAS estas linhas:
+    // Dentro do seu Main/index.jsx, substitua os useMemo por estes:
 
+    // Filtra o que NÃO está fechado
     const ticketsAbertos = useMemo(() => 
         tasks.filter(t => t.is_closed === false), [tasks]);
 
+    // Filtra o que está com o "Play" (on_going) e não está fechado
     const ticketsAndamento = useMemo(() => 
-        tasks.filter(t => t.is_running === true), [tasks]);
+        tasks.filter(t => t.on_going === true && t.is_closed === false), [tasks]);
 
+    // Filtra o que já foi fechado
     const ticketsFinalizados = useMemo(() => 
         tasks.filter(t => t.is_closed === true), [tasks]);
 
+    // Filtra o que não está rodando e não está fechado
     const ticketsAguardando = useMemo(() => 
-        tasks.filter(t => t.is_running === false && t.is_closed === false), [tasks]);
+        tasks.filter(t => t.on_going === false && t.is_closed === false), [tasks]);
 
     return (
         <main className={style.layout}>

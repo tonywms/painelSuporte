@@ -1,12 +1,6 @@
 import style from './style.module.css';
 
 export default function Tabela({ dados }) {
-    // Função simples para formatar a data ISO para o padrão brasileiro
-    const formatarData = (dataIso) => {
-        if (!dataIso) return '--';
-        return new Date(dataIso).toLocaleDateString('pt-BR');
-    };
-
     return (
         <div className={style.ContainerTable}>
             <section className={style.containerHeader}>
@@ -27,33 +21,33 @@ export default function Tabela({ dados }) {
             <section className={style.tableBody}>
                 {dados.length > 0 ? dados.map(task => (
                     <div key={task.id} className={style.elementTable}>
-                        {/* Tarefa: usa o campo 'id' */}
+                        {/* "id" = numero da tarefa */}
                         <div className={style.fontBodyTable}>#{task.id}</div>
                         
-                        {/* Cliente: usa o campo 'client_name' */}
+                        {/* "client_name" */}
                         <div className={style.fontBodyTable}>{task.client_name || 'N/A'}</div>
                         
-                        {/* Início: usa o campo 'created_at' */}
-                        <div className={style.fontBodyTable}>{formatarData(task.created_at)}</div>
+                        {/* "created_at" (Formatado para PT-BR) */}
+                        <div className={style.fontBodyTable}>
+                            {new Date(task.created_at).toLocaleDateString('pt-BR')}
+                        </div>
                         
-                        {/* Entrega: usa o campo 'estimated_at' */}
-                        <div className={style.fontBodyTable}>{formatarData(task.estimated_at)}</div>
+                        {/* "estimated_at" */}
+                        <div className={style.fontBodyTable}>
+                            {task.estimated_at ? new Date(task.estimated_at).toLocaleDateString('pt-BR') : '--'}
+                        </div>
                         
-                        {/* Status: usa o campo 'board_stage_name' */}
+                        {/* "board_stage_name" */}
                         <div className={style.fontBodyTable}>
                             <span className={task.on_going ? style.statusBadge : ''}>
-                                {task.board_stage_name || (task.on_going ? 'Em Andamento' : 'A Fazer')}
+                                {task.board_stage_name}
                             </span>
                         </div>
                         
-                        {/* Usuário: usa o campo 'user_name' */}
+                        {/* "user_name" */}
                         <div className={style.fontBodyTable}>{task.user_name || 'Pendente'}</div>
                     </div>
-                )) : (
-                    <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>
-                        Nenhum ticket aberto
-                    </div>
-                )}
+                )) : <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>Nenhum ticket aberto</div>}
             </section>
         </div>
     );
