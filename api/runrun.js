@@ -1,12 +1,14 @@
 export default async function handler(req, res) {
   try {
     const response = await fetch(
-      "https://runrun.it/api/v1.1/tasks?board_id=597967&limit=100",
+      "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100",
       {
         method: 'GET',
         headers: {
-          "App-Token": "5d34905dc4f5b7bbd96616fd27111300",
-          "User-Token": "3dt0GbitZvU4bvGC8RGs",
+          // AQUI ESTAVA O ERRO: A documentação exige App-Key
+          "App-Key": process.env.RUNRUN_APP_TOKEN, 
+          "User-Token": process.env.RUNRUN_USER_TOKEN,
+          "Content-Type": "application/json",
           "Accept": "application/json"
         }
       }
@@ -15,12 +17,18 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: "Erro na API Runrun.it", details: data });
+      return res.status(response.status).json({ 
+        erro: "O Runrun.it recusou a chave", 
+        detalhes: data 
+      });
     }
 
-    // Retorna os dados prontos para o seu componente Main
     res.status(200).json(data);
+
   } catch (error) {
-    res.status(500).json({ error: "Falha na requisição", message: error.message });
+    res.status(500).json({ 
+      erro: "Falha no servidor da Vercel", 
+      mensagem: error.message 
+    });
   }
 }
