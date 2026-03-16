@@ -51,13 +51,9 @@ export default function Main() {
     const ticketsAndamento = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "Fazendo"), [tasks]);
 
-    // 3. Finalizados: Tudo o que não for os status acima
+    // 3. Finalizados: Exibir tickets que tenham "Entregues" no nome do status
     const ticketsFinalizados = useMemo(() => 
-        tasks.filter(t => 
-            t.board_stage_name !== "A fazer" && 
-            t.board_stage_name !== "Em aprovação" && 
-            t.board_stage_name !== "Fazendo"
-        ), [tasks]);
+        tasks.filter(t => String(t.board_stage_name).toLowerCase() === "entregues"), [tasks]);
 
     // Filtra o que não está rodando e não está fechado (Contador Aguardando)
     const ticketsAguardando = useMemo(() => 
@@ -141,3 +137,7 @@ export default function Main() {
         </main>
     );
 }
+// Linha 140
+// Linha 141
+// Linha 142
+// Linha 143

@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
   try {
-    // A URL deve conter exatamente o board_id do seu JSON
+    // Adicionamos &is_closed=all para que o ticket 297 (que está fechado) apareça
     const response = await fetch(
-    "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100", 
+    "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100&is_closed=all", 
     {
         method: 'GET',
         headers: {
