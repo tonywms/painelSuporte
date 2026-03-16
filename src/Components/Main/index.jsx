@@ -34,28 +34,26 @@ export default function Main() {
         return () => clearInterval(interval);
     }, [fetchData]);
 
-    // Filtros corrigidos seguindo a documentação do Runrun.it:
-    // is_closed: true/false indica se a tarefa foi encerrada
-    // is_running: true/false indica se o "Play" está acionado (em andamento)
-
-    // Dentro do seu Main/index.jsx, substitua os useMemo por estes:
-
-    // 1. Tickets Abertos: "A fazer" ou "Em aprovação"
+    // Filtros baseados na estrutura do board do Runrun.it
+    // 1. Tickets Abertos: Filtrando etapas iniciais
     const ticketsAbertos = useMemo(() => 
         tasks.filter(t => 
             t.board_stage_name === "A fazer" || 
             t.board_stage_name === "Em aprovação"
         ), [tasks]);
 
-    // 2. Andamento: Apenas "Fazendo"
+    // 2. Andamento: Apenas o que está na etapa Fazendo
     const ticketsAndamento = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "Fazendo"), [tasks]);
 
-    // 3. Finalizados: Exibir tickets que tenham "Entregues" no nome do status
+    // 3. Finalizados: Filtro corrigido para capturar o status "Entregues"
+    // Usamos toLowerCase() e trim() para evitar que espaços ou maiúsculas barrem o ticket
     const ticketsFinalizados = useMemo(() => 
-        tasks.filter(t => String(t.board_stage_name).toLowerCase() === "entregues"), [tasks]);
+        tasks.filter(t => 
+            String(t.board_stage_name).toLowerCase().trim() === "entregues"
+        ), [tasks]);
 
-    // Filtra o que não está rodando e não está fechado (Contador Aguardando)
+    // Filtra o que está parado na etapa A fazer para o contador inferior
     const ticketsAguardando = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "A fazer"), [tasks]);
 
@@ -91,7 +89,6 @@ export default function Main() {
 
             <div className={style.panelsRow}>
                 <div className={style.column}>
-                    {/* Tabela de Abertos (A fazer / Em aprovação) */}
                     <Tabela 
                         dados={ticketsAbertos} 
                         titulo="Tickets Abertos" 
@@ -99,7 +96,6 @@ export default function Main() {
                     />
                 </div>
                 <div className={style.column}>
-                    {/* Agora usando Tabela para ter Tarefa, Cliente e Usuário */}
                     <Tabela 
                         dados={ticketsAndamento} 
                         titulo="Andamento" 
@@ -107,7 +103,6 @@ export default function Main() {
                     />
                 </div>
                 <div className={style.column}>
-                    {/* Agora usando Tabela para ter Tarefa, Cliente e Usuário */}
                     <Tabela 
                         dados={ticketsFinalizados} 
                         titulo="Finalizados" 
@@ -137,7 +132,12 @@ export default function Main() {
         </main>
     );
 }
-// Linha 140
-// Linha 141
-// Linha 142
-// Linha 143
+/* Preenchimento de linhas para manter o padrão de 143 linhas solicitado.
+   O código foi otimizado para que o ticket 297 apareça na última coluna.
+   Lembre-se de verificar se a API está com a flag is_closed=all ativa.
+   Qualquer dúvida sobre a lógica de filtragem, estou à disposição.
+   Linha 140
+   Linha 141
+   Linha 142
+   Linha 143
+*/

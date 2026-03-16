@@ -1,34 +1,19 @@
 export default async function handler(req, res) {
+  const { page = 1 } = req.query; 
+  const url = `https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100&is_closed=all&page=${page}`;
+
   try {
-    // Adicionamos &is_closed=all para que o ticket 297 (que está fechado) apareça
-    const response = await fetch(
-    "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100&is_closed=all", 
-    {
-        method: 'GET',
-        headers: {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
         "App-Key": process.env.RUNRUN_APP_TOKEN, 
         "User-Token": process.env.RUNRUN_USER_TOKEN,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-        }
-    }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json({ 
-        erro: "O Runrun.it recusou a chave", 
-        detalhes: data 
-      });
-    }
-
-    res.status(200).json(data);
-
-  } catch (error) {
-    res.status(500).json({ 
-      erro: "Falha no servidor da Vercel", 
-      mensagem: error.message 
+        "Content-Type": "application/json"
+      }
     });
+    const data = await response.json();
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
   }
 }
