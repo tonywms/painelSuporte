@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Tabela from './Tabela/index';
 import style from './layout.module.css';
 
@@ -7,10 +7,12 @@ export default function Main() {
     const [alerta, setAlerta] = useState(null); 
     const totalAbertosAnterior = useRef(0); 
 
-    const fetchData = async () => {
+    // Função de busca atualizada para evitar cache e garantir o reload automático
+    const fetchData = useCallback(async () => {
         try {
             // Busca os dados da sua API que já está travada no board_id=597967
-            const response = await fetch('/api/runrun');
+            // Adicionado timestamp (?t=) para forçar a API a trazer dados novos sempre
+            const response = await fetch(`/api/runrun?t=${new Date().getTime()}`);
             
             if (!response.ok) {
                 console.error("A API retornou um erro");
@@ -23,13 +25,14 @@ export default function Main() {
         } catch (error) {
             console.error("Erro ao carregar dados da Vercel:", error);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 60000); 
+        // Ajustado para 30 segundos para um refresh mais ágil das novas tarefas
+        const interval = setInterval(fetchData, 30000); 
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchData]);
 
     // Filtros corrigidos seguindo a documentação do Runrun.it:
     // is_closed: true/false indica se a tarefa foi encerrada
