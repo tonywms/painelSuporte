@@ -1,53 +1,78 @@
 import style from './style.module.css';
 
-export default function Tabela({ dados }) {
+export default function Tabela({ dados, titulo, variante }) {
+    const eColunaPrincipal = titulo === "Tickets Abertos";
+
+    // Definimos os gradientes diretamente para evitar falhas de mapeamento de classe
+    const getGradient = () => {
+        if (variante === 'aberto') return 'linear-gradient(90deg, #188ABD, #0ea5e9)';
+        if (variante === 'andamento') return 'linear-gradient(90deg, #6366f1, #a855f7)';
+        if (variante === 'finalizado') return 'linear-gradient(90deg, #0f766e, #10b981)';
+        return 'linear-gradient(90deg, #188ABD, #0ea5e9)'; // Default
+    };
+
+    const gridLayout = {
+        display: 'grid',
+        gridTemplateColumns: eColunaPrincipal 
+            ? '70px minmax(150px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr)' 
+            : '70px minmax(150px, 1.5fr) minmax(120px, 1fr)',
+        gap: '10px'
+    };
+
     return (
         <div className={style.ContainerTable}>
-            <section className={style.containerHeader}>
+            {/* Aplicamos o background inline para garantir a mudança de cor */}
+            <section 
+                className={style.containerHeader} 
+                style={{ background: getGradient() }}
+            >
                 <div className={style.headerTitle}>
-                    Tickets Abertos <span className={style.badge}>{dados.length}</span>
+                    {titulo} <span className={style.badge}>{dados?.length || 0}</span>
                 </div>
             </section>
 
-            <div className={style.labelsGrid}>
+            <div className={style.labelsGrid} style={gridLayout}>
                 <span>Tarefa</span>
                 <span>Cliente</span>
-                <span>Início</span>
-                <span>Entrega</span>
-                <span>Status</span>
+                {eColunaPrincipal && (
+                    <>
+                        <span>Início</span>
+                        <span>Entrega</span>
+                        <span>Status</span>
+                    </>
+                )}
                 <span>Usuário</span>
             </div>
 
             <section className={style.tableBody}>
-                {dados.length > 0 ? dados.map(task => (
-                    <div key={task.id} className={style.elementTable}>
-                        {/* "id" = numero da tarefa */}
+                {dados && dados.length > 0 ? dados.map(task => (
+                    <div key={task.id} className={style.elementTable} style={gridLayout}>
                         <div className={style.fontBodyTable}>#{task.id}</div>
-                        
-                        {/* "client_name" */}
                         <div className={style.fontBodyTable}>{task.client_name || 'N/A'}</div>
                         
-                        {/* "created_at" (Formatado para PT-BR) */}
-                        <div className={style.fontBodyTable}>
-                            {new Date(task.created_at).toLocaleDateString('pt-BR')}
-                        </div>
-                        
-                        {/* "estimated_at" */}
-                        <div className={style.fontBodyTable}>
-                            {task.estimated_at ? new Date(task.estimated_at).toLocaleDateString('pt-BR') : '--'}
-                        </div>
-                        
-                        {/* "board_stage_name" */}
-                        <div className={style.fontBodyTable}>
-                            <span className={task.on_going ? style.statusBadge : ''}>
-                                {task.board_stage_name}
-                            </span>
-                        </div>
-                        
-                        {/* "user_name" */}
+                        {eColunaPrincipal && (
+                            <>
+                                <div className={style.fontBodyTable}>
+                                    {new Date(task.created_at).toLocaleDateString('pt-BR')}
+                                </div>
+                                <div className={style.fontBodyTable}>
+                                    {task.estimated_at ? new Date(task.estimated_at).toLocaleDateString('pt-BR') : '--'}
+                                </div>
+                                <div className={style.fontBodyTable}>
+                                    <span className={task.on_going ? style.statusBadge : ''}>
+                                        {task.board_stage_name}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+
                         <div className={style.fontBodyTable}>{task.user_name || 'Pendente'}</div>
                     </div>
-                )) : <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>Nenhum ticket aberto</div>}
+                )) : (
+                    <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>
+                        Nenhum ticket encontrado
+                    </div>
+                )}
             </section>
         </div>
     );

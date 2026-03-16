@@ -1,17 +1,17 @@
 export default async function handler(req, res) {
   try {
+    // A URL deve conter exatamente o board_id do seu JSON
     const response = await fetch(
-      "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100",
-      {
+    "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100", 
+    {
         method: 'GET',
         headers: {
-          // AQUI ESTAVA O ERRO: A documentação exige App-Key
-          "App-Key": process.env.RUNRUN_APP_TOKEN, 
-          "User-Token": process.env.RUNRUN_USER_TOKEN,
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+        "App-Key": process.env.RUNRUN_APP_TOKEN, 
+        "User-Token": process.env.RUNRUN_USER_TOKEN,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
         }
-      }
+    }
     );
 
     const data = await response.json();

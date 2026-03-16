@@ -5,15 +5,26 @@
     border-radius: 14px;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100%; /* Ocupa a altura total da coluna do pai */
+    overflow: hidden; /* Garante que nada saia das bordas arredondadas */
 }
 
+/* Criamos um container para o scroll */
+.tableBody {
+    flex: 1;
+    overflow-y: auto; /* Ativa o scroll vertical */
+    padding-right: 5px; /* Espaço para a scrollbar não cobrir o texto */
+}
+
+/* Ajuste do Grid: Usamos minmax para impedir que as colunas sejam esmagadas */
 .labelsGrid, .elementTable {
     display: grid;
-    grid-template-columns: 70px 1.5fr 1fr 1fr 1fr 1fr;
+    /* 70px fixo para tarefa, o resto distribui mas com um mínimo de 100px */
+    grid-template-columns: 70px minmax(150px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
     gap: 10px;
     align-items: center;
     padding: 10px;
+    width: 100%;
 }
 
 .labelsGrid {
@@ -21,6 +32,10 @@
     font-size: 11px;
     font-weight: bold;
     text-transform: uppercase;
+    position: sticky; /* Mantém o cabeçalho fixo no topo ao rolar */
+    top: 0;
+    background: #020617;
+    z-index: 1;
 }
 
 .elementTable {
@@ -31,15 +46,41 @@
     font-size: 13px;
 }
 
+/* Remova o background: linear-gradient... da sua .containerHeader original */
 .containerHeader {
-    background: linear-gradient(90deg, #188ABD, #0ea5e9);
     border-radius: 12px;
-    height: 60px;
+    min-height: 68px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
-.headerTitle { color: #fff; font-weight: 800; font-size: 20px; display: flex; gap: 10px; }
+/* Cores específicas baseadas nos seus contadores */
+.headerAberto {
+    background: linear-gradient(90deg, #188ABD, #0ea5e9);
+}
+
+.headerAndamento {
+    background: linear-gradient(90deg, #6366f1, #a855f7); /* Roxo/Violeta */
+}
+
+.headerFinalizado {
+    background: linear-gradient(90deg, #0f766e, #10b981); /* Verde */
+}
+
+/* Ajuste o statusBadge se necessário */
+.statusBadge {
+    background: #1e293b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.headerTitle { color: #fff; font-weight: 800; font-size: 18px; display: flex; gap: 10px; }
 .badge { background: #22c55e; padding: 2px 10px; border-radius: 20px; font-size: 14px; }
+
+/* Scrollbar Estilizada */
+.tableBody::-webkit-scrollbar { width: 6px; }
+.tableBody::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }

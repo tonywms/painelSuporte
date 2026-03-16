@@ -1,13 +1,15 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Tabela from './Tabela/index';
-import Conferidos from './Conferidos/index';
 import style from './layout.module.css';
 
 export default function Main() {
     const [tasks, setTasks] = useState([]);
+    const [alerta, setAlerta] = useState(null); 
+    const totalAbertosAnterior = useRef(0); 
 
     const fetchData = async () => {
         try {
+            // Busca os dados da sua API que já está travada no board_id=597967
             const response = await fetch('/api/runrun');
             
             if (!response.ok) {
@@ -35,40 +37,82 @@ export default function Main() {
 
     // Dentro do seu Main/index.jsx, substitua os useMemo por estes:
 
-    // Filtra o que NÃO está fechado
+    // 1. Tickets Abertos: "A fazer" ou "Em aprovação"
     const ticketsAbertos = useMemo(() => 
-        tasks.filter(t => t.is_closed === false), [tasks]);
+        tasks.filter(t => 
+            t.board_stage_name === "A fazer" || 
+            t.board_stage_name === "Em aprovação"
+        ), [tasks]);
 
-    // Filtra o que está com o "Play" (on_going) e não está fechado
+    // 2. Andamento: Apenas "Fazendo"
     const ticketsAndamento = useMemo(() => 
-        tasks.filter(t => t.on_going === true && t.is_closed === false), [tasks]);
+        tasks.filter(t => t.board_stage_name === "Fazendo"), [tasks]);
 
-    // Filtra o que já foi fechado
+    // 3. Finalizados: Tudo o que não for os status acima
     const ticketsFinalizados = useMemo(() => 
-        tasks.filter(t => t.is_closed === true), [tasks]);
+        tasks.filter(t => 
+            t.board_stage_name !== "A fazer" && 
+            t.board_stage_name !== "Em aprovação" && 
+            t.board_stage_name !== "Fazendo"
+        ), [tasks]);
 
-    // Filtra o que não está rodando e não está fechado
+    // Filtra o que não está rodando e não está fechado (Contador Aguardando)
     const ticketsAguardando = useMemo(() => 
-        tasks.filter(t => t.on_going === false && t.is_closed === false), [tasks]);
+        tasks.filter(t => t.board_stage_name === "A fazer"), [tasks]);
+
+    // --- LÓGICA DO ALERTA DE NOVO TICKET ---
+    useEffect(() => {
+        const quantidadeAtual = ticketsAbertos.length;
+
+        // Se a quantidade atual for maior que a anterior, dispara o alerta
+        if (quantidadeAtual > totalAbertosAnterior.current && totalAbertosAnterior.current !== 0) {
+            // Pega o ID do ticket mais recente (topo da lista)
+            const novoTicket = ticketsAbertos[0]; 
+            setAlerta(`Ticket aberto de nº ${novoTicket?.id}`);
+
+            // Remove o alerta após 10 segundos
+            setTimeout(() => setAlerta(null), 10000);
+        }
+
+        totalAbertosAnterior.current = quantidadeAtual;
+    }, [ticketsAbertos]);
 
     return (
         <main className={style.layout}>
+            
+            {/* ALERTA VISUAL NO MEIO DA TELA */}
+            {alerta && (
+                <div className={style.overlayAlerta}>
+                    <div className={style.boxAlerta}>
+                        <h1 className={style.tituloAlerta}>NOVO CHAMADO!</h1>
+                        <p className={style.mensagemAlerta}>{alerta}</p>
+                    </div>
+                </div>
+            )}
+
             <div className={style.panelsRow}>
                 <div className={style.column}>
-                    <Tabela dados={ticketsAbertos} />
-                </div>
-                <div className={style.column}>
-                    <Conferidos 
-                        title="Andamento" 
-                        dados={ticketsAndamento} 
-                        gradient="linear-gradient(90deg, #188ABD, #0ea5e9)" 
+                    {/* Tabela de Abertos (A fazer / Em aprovação) */}
+                    <Tabela 
+                        dados={ticketsAbertos} 
+                        titulo="Tickets Abertos" 
+                        variante="aberto" 
                     />
                 </div>
                 <div className={style.column}>
-                    <Conferidos 
-                        title="Finalizados" 
+                    {/* Agora usando Tabela para ter Tarefa, Cliente e Usuário */}
+                    <Tabela 
+                        dados={ticketsAndamento} 
+                        titulo="Andamento" 
+                        variante="andamento" 
+                    />
+                </div>
+                <div className={style.column}>
+                    {/* Agora usando Tabela para ter Tarefa, Cliente e Usuário */}
+                    <Tabela 
                         dados={ticketsFinalizados} 
-                        gradient="linear-gradient(90deg, #0f766e, #14b8a6)" 
+                        titulo="Finalizados" 
+                        variante="finalizado" 
                     />
                 </div>
             </div>
