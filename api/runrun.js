@@ -1,37 +1,26 @@
-import https from "https";
-
 export default async function handler(req, res) {
+  try {
 
-  const options = {
-    hostname: "runrun.it",
-    path: "/api/v1.0/tasks?board_id=597967",
-    method: "GET",
-    headers: {
-      "App-Token": process.env.RUNRUN_APP_TOKEN,
-      "User-Token": process.env.RUNRUN_USER_TOKEN
-    }
-  };
+    const url = "https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100";
 
-  const request = https.request(options, response => {
-
-    let data = "";
-
-    response.on("data", chunk => {
-      data += chunk;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "App-Token": process.env.RUNRUN_APP_TOKEN,
+        "User-Token": process.env.RUNRUN_USER_TOKEN
+      }
     });
 
-    response.on("end", () => {
-      res.status(response.statusCode).send(data);
-    });
+    const data = await response.text();
 
-  });
+    res.status(response.status).send(data);
 
-  request.on("error", error => {
+  } catch (error) {
+
     res.status(500).json({
-      error: "Erro conexão",
+      error: "Erro ao conectar com Runrun",
       message: error.message
     });
-  });
 
-  request.end();
+  }
 }
