@@ -33,6 +33,8 @@ export default function Main() {
     // is_closed: true/false indica se a tarefa foi encerrada
     // is_running: true/false indica se o "Play" está acionado (em andamento)
 
+// No seu arquivo Main/index.jsx, mude APENAS estas linhas:
+
     const ticketsAbertos = useMemo(() => 
         tasks.filter(t => t.is_closed === false), [tasks]);
 
