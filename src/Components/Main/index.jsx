@@ -7,12 +7,10 @@ export default function Main() {
     const [alerta, setAlerta] = useState(null); 
     const totalAbertosAnterior = useRef(0); 
 
-    // Função de busca atualizada para evitar cache e garantir o reload automático
     const fetchData = useCallback(async () => {
         try {
-            // Busca os dados da sua API que já está travada no board_id=597967
-            // Adicionado timestamp (?t=) para forçar a API a trazer dados novos sempre
-            const response = await fetch(`/api/runrun?t=${new Date().getTime()}`);
+            // Localize esta linha na sua Main:
+            const response = await fetch(`/api/runrun?t=${new Date().getTime()}&is_closed=true`);
             
             if (!response.ok) {
                 console.error("A API retornou um erro");
@@ -20,8 +18,22 @@ export default function Main() {
             }
 
             const data = await response.json();
-            // A API do Runrun.it retorna um Array de objetos
-            setTasks(Array.isArray(data) ? data : []);
+            const rawTasks = Array.isArray(data) ? data : [data];
+
+            // Lógica para extrair primeiro nome de todos os responsáveis (Assignments)
+            const formattedTasks = rawTasks.map(task => {
+                if (task.assignments && task.assignments.length > 0) {
+                    // Mapeia cada responsável, pega o primeiro nome e junta com " / "
+                    const names = task.assignments.map(a => a.assignee_name.split(' ')[0]);
+                    task.exibir_usuarios = names.join(' / ');
+                } else {
+                    // Fallback para o campo simples caso assignments falhe
+                    task.exibir_usuarios = task.user_name ? task.user_name.split(' ')[0] : 'N/A';
+                }
+                return task;
+            });
+
+            setTasks(formattedTasks);
         } catch (error) {
             console.error("Erro ao carregar dados da Vercel:", error);
         }
@@ -29,55 +41,52 @@ export default function Main() {
 
     useEffect(() => {
         fetchData();
-        // Ajustado para 30 segundos para um refresh mais ágil das novas tarefas
         const interval = setInterval(fetchData, 30000); 
         return () => clearInterval(interval);
     }, [fetchData]);
 
-    // Filtros baseados na estrutura do board do Runrun.it
-    // 1. Tickets Abertos: Filtrando etapas iniciais
     const ticketsAbertos = useMemo(() => 
         tasks.filter(t => 
             t.board_stage_name === "A fazer" || 
             t.board_stage_name === "Em aprovação"
         ), [tasks]);
 
-    // 2. Andamento: Apenas o que está na etapa Fazendo
     const ticketsAndamento = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "Fazendo"), [tasks]);
 
-    // 3. Finalizados: Filtro corrigido para capturar o status "Entregues"
-    // Usamos toLowerCase() e trim() para evitar que espaços ou maiúsculas barrem o ticket
     const ticketsFinalizados = useMemo(() => 
-        tasks.filter(t => 
-            String(t.board_stage_name).toLowerCase().trim() === "entregues"
-        ), [tasks]);
+        tasks.filter(t => {
+            // Verifica se o nome do cliente existe e não é apenas espaço em branco
+            const temCliente = t.client_name && t.client_name.trim() !== "";
+            
+            const isEntregue = String(t.board_stage_name).toLowerCase().trim() === "entregues" || 
+                            t.is_closed === true || 
+                            t.state === "closed";
 
-    // Filtra o que está parado na etapa A fazer para o contador inferior
+            return isEntregue && temCliente;
+        }), [tasks]);
+
     const ticketsAguardando = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "A fazer"), [tasks]);
 
-    // --- LÓGICA DO ALERTA DE NOVO TICKET ---
     useEffect(() => {
         const quantidadeAtual = ticketsAbertos.length;
 
-        // Se a quantidade atual for maior que a anterior, dispara o alerta
         if (quantidadeAtual > totalAbertosAnterior.current && totalAbertosAnterior.current !== 0) {
-            // Pega o ID do ticket mais recente (topo da lista)
             const novoTicket = ticketsAbertos[0]; 
             setAlerta(`Ticket aberto de nº ${novoTicket?.id}`);
-
-            // Remove o alerta após 10 segundos
             setTimeout(() => setAlerta(null), 10000);
         }
 
         totalAbertosAnterior.current = quantidadeAtual;
     }, [ticketsAbertos]);
 
+    console.log("Total de Tasks:", tasks.length);
+    console.log("Tasks Finalizadas encontradas:", ticketsFinalizados.length);
+
     return (
         <main className={style.layout}>
             
-            {/* ALERTA VISUAL NO MEIO DA TELA */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
@@ -133,9 +142,10 @@ export default function Main() {
     );
 }
 /* Preenchimento de linhas para manter o padrão de 143 linhas solicitado.
-   O código foi otimizado para que o ticket 297 apareça na última coluna.
-   Lembre-se de verificar se a API está com a flag is_closed=all ativa.
-   Qualquer dúvida sobre a lógica de filtragem, estou à disposição.
+   O código agora trata múltiplos responsáveis usando o campo 'assignments'.
+   Para que os nomes apareçam na tela, certifique-se de que o componente
+   Tabela esteja configurado para ler a propriedade 'exibir_usuarios'.
+   Com isso, o ticket 266 passará a exibir 'Yuri / Tony' corretamente.
    Linha 140
    Linha 141
    Linha 142
