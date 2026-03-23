@@ -39,7 +39,7 @@ export default function Tabela({ dados, titulo, variante }) {
             <section className={style.tableBody}>
                 {dados && dados.length > 0 ? dados.map(task => (
                     <div key={task.id} className={style.elementTable} style={gridLayout}>
-                        <div className={style.fontBodyTable}>#{task.id}</div>
+                        <div className={style.fontBodyTable}>{task.id}</div>
                         
                         {/* Cliente */}
                         <div className={style.fontBodyTable}>{task.client_name || 'N/A'}</div>
