@@ -72,29 +72,48 @@ export default function Main({ slaConfig }) {
         const nextAlert = alertaQueue.current.shift();
         isSpeaking.current = true;
         
+        // Mostra o alerta
         setAlerta(nextAlert.displayMessage);
+        
+        // Força a remoção do alerta após o tempo, mesmo na TV Samsung
+        const timeoutId = setTimeout(() => {
+            setAlerta(null);
+            isSpeaking.current = false;
+            
+            // Processa próximo alerta após remover o atual
+            setTimeout(() => {
+                if (alertaQueue.current.length > 0) {
+                    processAlertQueue();
+                }
+            }, 500);
+        }, 4000); // 4 segundos visível
         
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
             const utterance = new SpeechSynthesisUtterance(nextAlert.voiceMessage);
             utterance.lang = 'pt-BR';
             utterance.rate = 0.9;
+            
             utterance.onend = () => {
-                isSpeaking.current = false;
-                setAlerta(null);
-                setTimeout(() => processAlertQueue(), 500);
+                // Não faz nada com o alerta aqui, o setTimeout cuida da remoção
+                console.log('Fala finalizada');
             };
-            utterance.onerror = () => {
-                isSpeaking.current = false;
-                setAlerta(null);
-                setTimeout(() => processAlertQueue(), 500);
+            
+            utterance.onerror = (e) => {
+                console.error('Erro na voz:', e);
+                // Força remoção do alerta em caso de erro
+                clearTimeout(timeoutId);
+                setTimeout(() => {
+                    setAlerta(null);
+                    isSpeaking.current = false;
+                    if (alertaQueue.current.length > 0) {
+                        processAlertQueue();
+                    }
+                }, 500);
             };
+            
             window.speechSynthesis.speak(utterance);
         } else {
-            setTimeout(() => {
-                setAlerta(null);
-                isSpeaking.current = false;
-                setTimeout(() => processAlertQueue(), 500);
-            }, 3500);
+            // Sem voz, apenas visual - o setTimeout já cuida da remoção
         }
     }, [slaConfig, audioPermissionGranted]);
 

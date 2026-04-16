@@ -199,3 +199,33 @@
     padding: 16px 24px;
     gap: 20px;
 }
+
+/* Alertas - Garantir que o overlay pode ser removido */
+.overlayAlerta {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn .25s ease;
+    pointer-events: none; /* Permite clicar através do overlay se necessário */
+}
+
+/* Classe para esconder o alerta - será aplicada via JavaScript se necessário */
+.overlayAlertaHidden {
+    display: none !important;
+}
+
+.boxAlerta {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    border: 3px solid #ef4444;
+    padding: 32px 56px;
+    border-radius: 28px;
+    text-align: center;
+    box-shadow: 0 0 70px rgba(239, 68, 68, 0.4);
+    max-width: 550px;
+    pointer-events: auto;
+}
