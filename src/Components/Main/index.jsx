@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Tabela from './Tabela/index';
 import style from './layout.module.css';
 
-// Função para formatar minutos em formato legível
+// Função para formatar minutos
 const formatMinutes = (minutes) => {
     if (!minutes && minutes !== 0) return '0min';
     const absMinutes = Math.abs(minutes);
@@ -48,8 +48,9 @@ export default function Main({ slaConfig }) {
     const [lastRefresh, setLastRefresh] = useState(new Date());
     const [audioPermissionGranted, setAudioPermissionGranted] = useState(false);
     
-    const alertaQueue = useRef([]);
-    const isSpeaking = useRef(false);
+    const alertaQueue = useRef([]); // Fila de alertas pendentes
+    const isProcessing = useRef(false); // Controla se está processando um alerta
+    const currentUtterance = useRef(null); // Referência para a fala atual
     const alertadosRef = useRef(new Set());
     const novosTicketsRef = useRef(new Set());
 
@@ -65,57 +66,71 @@ export default function Main({ slaConfig }) {
         localStorage.setItem('audioPermissionGranted', 'true');
     };
 
-    // Processador de alertas
-    const processAlertQueue = useCallback(() => {
-        if (alertaQueue.current.length === 0 || isSpeaking.current) return;
+    // Processa a fila de alertas - UM POR VEZ
+    const processNextAlert = useCallback(() => {
+        // Se já está processando um alerta, não faz nada
+        if (isProcessing.current) {
+            console.log('⚠️ Já processando um alerta, aguardando...');
+            return;
+        }
         
+        // Se não tem alerta na fila, não faz nada
+        if (alertaQueue.current.length === 0) {
+            console.log('📭 Fila de alertas vazia');
+            return;
+        }
+        
+        // Pega o próximo alerta da fila
         const nextAlert = alertaQueue.current.shift();
-        isSpeaking.current = true;
+        isProcessing.current = true;
         
-        // Mostra o alerta
+        console.log('🔔 Processando alerta:', nextAlert.displayMessage);
+        
+        // Mostra o alerta visual
         setAlerta(nextAlert.displayMessage);
         
-        // Força a remoção do alerta após o tempo, mesmo na TV Samsung
-        const timeoutId = setTimeout(() => {
-            setAlerta(null);
-            isSpeaking.current = false;
-            
-            // Processa próximo alerta após remover o atual
-            setTimeout(() => {
-                if (alertaQueue.current.length > 0) {
-                    processAlertQueue();
-                }
-            }, 500);
-        }, 4000); // 4 segundos visível
-        
+        // Se voz estiver ativada, reproduz
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
+            // Cancela qualquer fala anterior
+            if (currentUtterance.current) {
+                window.speechSynthesis.cancel();
+            }
+            
             const utterance = new SpeechSynthesisUtterance(nextAlert.voiceMessage);
             utterance.lang = 'pt-BR';
             utterance.rate = 0.9;
+            currentUtterance.current = utterance;
             
             utterance.onend = () => {
-                // Não faz nada com o alerta aqui, o setTimeout cuida da remoção
-                console.log('Fala finalizada');
+                console.log('✅ Fala finalizada, removendo alerta visual');
+                // Remove o alerta visual
+                setAlerta(null);
+                // Libera para o próximo alerta
+                isProcessing.current = false;
+                currentUtterance.current = null;
+                // Processa o próximo alerta na fila (se houver)
+                setTimeout(() => processNextAlert(), 500);
             };
             
             utterance.onerror = (e) => {
-                console.error('Erro na voz:', e);
-                // Força remoção do alerta em caso de erro
-                clearTimeout(timeoutId);
-                setTimeout(() => {
-                    setAlerta(null);
-                    isSpeaking.current = false;
-                    if (alertaQueue.current.length > 0) {
-                        processAlertQueue();
-                    }
-                }, 500);
+                console.error('❌ Erro na voz:', e);
+                // Em caso de erro, remove o alerta e continua
+                setAlerta(null);
+                isProcessing.current = false;
+                currentUtterance.current = null;
+                setTimeout(() => processNextAlert(), 500);
             };
             
             window.speechSynthesis.speak(utterance);
         } else {
-            // Sem voz, apenas visual - o setTimeout já cuida da remoção
+            // Sem voz, mantém o alerta visual por 5 segundos
+            setTimeout(() => {
+                setAlerta(null);
+                isProcessing.current = false;
+                setTimeout(() => processNextAlert(), 500);
+            }, 5000);
         }
-    }, [slaConfig, audioPermissionGranted]);
+    }, [slaConfig.voiceEnabled, audioPermissionGranted]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -157,32 +172,35 @@ export default function Main({ slaConfig }) {
                 return task;
             });
 
+            // Verificar novos tickets de HOJE
             const novosTickets = formattedTasks.filter(t => 
                 (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
                 !novosTicketsRef.current.has(t.id) &&
                 isTicketFromToday(t.created_at)
             );
             
-            console.log('Novos tickets de HOJE encontrados:', novosTickets.length);
+            console.log('📢 Novos tickets de HOJE encontrados:', novosTickets.length);
             
-            novosTickets.forEach(ticket => {
+            // Adicionar novos tickets à fila (UM POR UM)
+            for (const ticket of novosTickets) {
                 novosTicketsRef.current.add(ticket.id);
                 alertaQueue.current.push({
                     displayMessage: `📢 NOVO TICKET! #${ticket.id} - ${ticket.client_name} | Assuma em ${slaConfig.supportTakeoverTime}min`,
                     voiceMessage: `Novo ticket ${ticket.id} do cliente ${ticket.client_name}. Assuma em ${slaConfig.supportTakeoverTime} minutos.`
                 });
-            });
+            }
 
             setTasks(formattedTasks);
             setLastRefresh(new Date());
             
-            if (novosTickets.length > 0 && alertaQueue.current.length > 0 && !isSpeaking.current && audioPermissionGranted) {
-                setTimeout(() => processAlertQueue(), 300);
+            // Inicia processamento da fila se houver novos tickets e não estiver processando
+            if (novosTickets.length > 0 && !isProcessing.current) {
+                setTimeout(() => processNextAlert(), 500);
             }
         } catch (error) {
             console.error("Erro:", error);
         }
-    }, [slaConfig, audioPermissionGranted, processAlertQueue]);
+    }, [slaConfig, audioPermissionGranted, processNextAlert]);
 
     useEffect(() => {
         fetchData();
@@ -220,24 +238,24 @@ export default function Main({ slaConfig }) {
         });
     }, [tasks, slaConfig.finishedDays]);
 
-    // const ticketsAguardando = useMemo(() => 
-    //     tasks.filter(t => t.board_stage_name === "A fazer"), [tasks]);
-    // Alertas SLA
+    // Alertas SLA (tickets atrasados)
     useEffect(() => {
         const ticketsAtrasados = ticketsAbertos.filter(t => 
             t.minutesOpen > slaConfig.supportTakeoverTime && !alertadosRef.current.has(t.id)
         );
-        ticketsAtrasados.forEach(ticket => {
+        
+        for (const ticket of ticketsAtrasados) {
             alertadosRef.current.add(ticket.id);
             alertaQueue.current.push({
                 displayMessage: `⚠️ SLA! Ticket #${ticket.id} - ${ticket.client_name} | Estourou ${slaConfig.supportTakeoverTime}min!`,
                 voiceMessage: `Atenção! Ticket ${ticket.id} do cliente ${ticket.client_name} estourou o SLA de ${slaConfig.supportTakeoverTime} minutos.`
             });
-        });
-        if (alertaQueue.current.length > 0 && !isSpeaking.current && audioPermissionGranted) {
-            processAlertQueue();
         }
-    }, [ticketsAbertos, slaConfig, audioPermissionGranted, processAlertQueue]);
+        
+        if (ticketsAtrasados.length > 0 && !isProcessing.current) {
+            setTimeout(() => processNextAlert(), 500);
+        }
+    }, [ticketsAbertos, slaConfig, processNextAlert]);
 
     // Calcular tempo médio de resolução
     const avgTimeFormatted = useMemo(() => {
@@ -277,10 +295,40 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* Alerta visual */}
+            {/* Alerta visual - FICA NA TELA ENQUANTO A VOZ FALA */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
+                        <button 
+                            onClick={() => {
+                                // Botão para fechar manualmente (útil na TV)
+                                if (currentUtterance.current) {
+                                    window.speechSynthesis.cancel();
+                                }
+                                setAlerta(null);
+                                isProcessing.current = false;
+                                currentUtterance.current = null;
+                                setTimeout(() => processNextAlert(), 500);
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '12px',
+                                right: '12px',
+                                background: 'rgba(0,0,0,0.6)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                color: 'white',
+                                fontSize: '18px',
+                                cursor: 'pointer',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            ✕
+                        </button>
                         <h1 className={style.tituloAlerta}>
                             {alerta.includes('SLA') ? '⚠️ ALERTA DE SLA ⚠️' : '📢 NOVO TICKET!'}
                         </h1>
@@ -330,7 +378,6 @@ export default function Main({ slaConfig }) {
         </main>
     );
 }
-
 /*
 vercel --prod
 */
