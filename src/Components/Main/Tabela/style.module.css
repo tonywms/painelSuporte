@@ -1,86 +1,321 @@
-.ContainerTable {
+.containerTable {
     width: 100%;
-    background: #020617;
-    padding: 14px;
-    border-radius: 14px;
+    background: rgba(2, 6, 23, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
-    height: 100%; /* Ocupa a altura total da coluna do pai */
-    overflow: hidden; /* Garante que nada saia das bordas arredondadas */
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid rgba(56, 189, 248, 0.1);
+    transition: all 0.3s ease;
 }
 
-/* Criamos um container para o scroll */
+.containerTable:hover {
+    border-color: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.tableHeader {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.6));
+    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    border-radius: 20px 20px 0 0;
+}
+
+.tableHeader h3 {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tableHeader .badge {
+    background: rgba(56, 189, 248, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #38bdf8;
+}
+
 .tableBody {
     flex: 1;
-    overflow-y: auto; /* Ativa o scroll vertical */
-    padding-right: 5px; /* Espaço para a scrollbar não cobrir o texto */
+    overflow-y: auto;
+    padding: 12px;
 }
 
-/* Ajuste do Grid: Usamos minmax para impedir que as colunas sejam esmagadas */
-.labelsGrid, .elementTable {
+/* GRID PARA TICKETS ABERTOS - 5 colunas */
+.labelsGridAbertos, .elementTableAbertos {
     display: grid;
-    /* 70px fixo para tarefa, o resto distribui mas com um mínimo de 100px */
-    grid-template-columns: 70px minmax(150px, 1.5fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr);
-    gap: 10px;
+    grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr;
+    gap: 12px;
     align-items: center;
-    padding: 10px;
+    padding: 12px 16px;
+}
+
+/* GRID PARA EM ANDAMENTO - 4 colunas - MAIS ESPAÇO */
+.labelsGridAndamento, .elementTableAndamento {
+    display: grid;
+    grid-template-columns: 70px 2fr 120px 1.5fr;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 20px;
     width: 100%;
 }
 
-.labelsGrid {
+/* GRID PARA FINALIZADOS - 5 colunas */
+.labelsGridFinalizados, .elementTableFinalizados {
+    display: grid;
+    grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+}
+
+.labelsGridAbertos, .labelsGridAndamento, .labelsGridFinalizados {
     color: #94a3b8;
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 700;
     text-transform: uppercase;
-    position: sticky; /* Mantém o cabeçalho fixo no topo ao rolar */
+    letter-spacing: 0.5px;
+    position: sticky;
     top: 0;
-    background: #020617;
-    z-index: 1;
+    background: rgba(2, 6, 23, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    margin-bottom: 8px;
 }
 
-.elementTable {
-    background: #0f172a;
-    border-radius: 10px;
-    margin-bottom: 6px;
-    color: #fff;
-    font-size: 13px;
-}
-
-/* Remova o background: linear-gradient... da sua .containerHeader original */
-.containerHeader {
+.elementTableAbertos, .elementTableAndamento, .elementTableFinalizados {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.6));
     border-radius: 12px;
-    min-height: 68px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    flex-shrink: 0;
+    margin-bottom: 8px;
+    color: #e2e8f0;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    animation: fadeInUp 0.3s ease;
 }
 
-/* Cores específicas baseadas nos seus contadores */
-.headerAberto {
-    background: linear-gradient(90deg, #188ABD, #0ea5e9);
+.elementTableAbertos:hover, .elementTableAndamento:hover, .elementTableFinalizados:hover {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+    transform: translateX(4px);
+    border-color: rgba(56, 189, 248, 0.3);
 }
 
-.headerAndamento {
-    background: linear-gradient(90deg, #6366f1, #a855f7); /* Roxo/Violeta */
+/* Responsivo para telas maiores - EM ANDAMENTO OCUPA MAIS ESPAÇO */
+@media (min-width: 1400px) {
+    .labelsGridAndamento, .elementTableAndamento {
+        grid-template-columns: 80px 2.2fr 140px 1.8fr;
+        gap: 20px;
+        padding: 16px 24px;
+    }
+    
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr;
+        gap: 16px;
+    }
+    
+    .labelsGridFinalizados, .elementTableFinalizados {
+        grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr;
+        gap: 16px;
+    }
 }
 
-.headerFinalizado {
-    background: linear-gradient(90deg, #0f766e, #10b981); /* Verde */
+/* Responsivo para telas médias */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .labelsGridAndamento, .elementTableAndamento {
+        grid-template-columns: 75px 2fr 130px 1.6fr;
+        gap: 18px;
+        padding: 14px 20px;
+    }
 }
 
-/* Ajuste o statusBadge se necessário */
-.statusBadge {
-    background: #1e293b;
-    padding: 2px 6px;
-    border-radius: 4px;
+/* Responsivo para telas menores */
+@media (max-width: 1000px) {
+    .labelsGridAndamento, .elementTableAndamento {
+        grid-template-columns: 60px 1.5fr 100px 1.2fr;
+        gap: 10px;
+        padding: 10px 14px;
+    }
+    
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 60px 1.5fr 80px 1fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+    
+    .labelsGridFinalizados, .elementTableFinalizados {
+        grid-template-columns: 60px 1.5fr 80px 1fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+}
+
+/* Status de SLA - Suporte (30-45 min) */
+.statusCritical {
+    background: #ef4444;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
     font-size: 11px;
+    font-weight: 700;
+    animation: pulseUrgent 1s infinite;
+    white-space: nowrap;
 }
 
-.headerTitle { color: #fff; font-weight: 800; font-size: 18px; display: flex; gap: 10px; }
-.badge { background: #22c55e; padding: 2px 10px; border-radius: 20px; font-size: 14px; }
+.statusWarning {
+    background: #f59e0b;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
 
-/* Scrollbar Estilizada */
-.tableBody::-webkit-scrollbar { width: 6px; }
-.tableBody::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+.statusNormal {
+    background: #22c55e;
+    color: #052e16;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.statusDev {
+    background: #8b5cf6;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.statusDefault {
+    background: #1e293b;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* Estilos para o texto dentro das células */
+.elementTableAbertos div, 
+.elementTableAndamento div, 
+.elementTableFinalizados div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ID do ticket - estilo monoespaçado */
+.elementTableAbertos div:first-child,
+.elementTableAndamento div:first-child,
+.elementTableFinalizados div:first-child {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+/* Nome do cliente */
+.elementTableAbertos div:nth-child(2),
+.elementTableAndamento div:nth-child(2),
+.elementTableFinalizados div:nth-child(2) {
+    font-weight: 600;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseUrgent {
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+/* Scrollbar estilizada */
+.tableBody::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.tableBody::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+}
+
+.tableBody::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+
+.tableBody::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* Aumentar fontes para melhor legibilidade */
+.elementTableAbertos, 
+.elementTableAndamento, 
+.elementTableFinalizados {
+    font-size: 15px !important;
+    padding: 14px 18px !important;
+}
+
+.elementTableAbertos div, 
+.elementTableAndamento div, 
+.elementTableFinalizados div {
+    font-size: 15px;
+}
+
+/* Status badges maiores */
+.statusCritical, .statusWarning, .statusNormal, .statusDev, .statusDefault {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+/* Badge do header maior */
+.tableHeader .badge {
+    padding: 6px 14px !important;
+    font-size: 14px !important;
+}
+
+.tableHeader h3 {
+    font-size: 20px !important;
+}
+
+/* Grids com colunas mais largas */
+.labelsGridAbertos, .elementTableAbertos {
+    grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
+    gap: 16px !important;
+}
+
+.labelsGridAndamento, .elementTableAndamento {
+    grid-template-columns: 80px 2fr 130px 1.8fr !important;
+    gap: 16px !important;
+}
+
+.labelsGridFinalizados, .elementTableFinalizados {
+    grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
+    gap: 16px !important;
+}

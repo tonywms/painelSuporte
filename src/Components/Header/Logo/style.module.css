@@ -1,14 +1,17 @@
 .containerLogo {
-    --tw-scale-x: .75;
-    --tw-scale-y: .75;
-    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-    scale: .75;
-    height: 60px;
     display: flex;
     align-items: center;
-    padding: 8px;
+    justify-content: center;
 }
 
 .logo {
-    filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04))
+    height: 45px;
+    width: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+    transform: scale(1.02);
 }

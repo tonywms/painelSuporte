@@ -1,10 +1,10 @@
 export default async function handler(req, res) {
   // URLs para buscar abertos e fechados separadamente
-  const urlAbertos = `https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100&is_closed=false&sort_by=id&sort_order=desc`;
-  const urlFechados = `https://runrun.it/api/v1.0/tasks?board_id=597967&limit=100&is_closed=true&sort_by=id&sort_order=desc`;
+  const urlAbertos = `https://runrun.it/api/v1.0/tasks?board_id=597967&limit=200&is_closed=false&sort_by=id&sort_order=desc`;
+  const urlFechados = `https://runrun.it/api/v1.0/tasks?board_id=597967&limit=200&is_closed=true&sort_by=id&sort_order=desc`;
 
   const headers = {
-    "App-Key": process.env.RUNRUN_APP_TOKEN, 
+    "App-Key": process.env.RUNRUN_APP_TOKEN,
     "User-Token": process.env.RUNRUN_USER_TOKEN,
     "Content-Type": "application/json"
   };
