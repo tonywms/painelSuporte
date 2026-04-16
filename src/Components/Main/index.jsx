@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Tabela from './Tabela/index';
 import style from './layout.module.css';
 
-// Função para formatar minutos em formato legível
+// Função para formatar minutos
 const formatMinutes = (minutes) => {
     if (!minutes && minutes !== 0) return '0min';
     const absMinutes = Math.abs(minutes);
@@ -53,7 +53,7 @@ export default function Main({ slaConfig }) {
     const alertadosRef = useRef(new Set());
     const novosTicketsRef = useRef(new Set());
 
-    const ativarAlertas = () => {
+    const ativarAlertas = useCallback(() => {
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             const testUtterance = new SpeechSynthesisUtterance('Alertas de voz ativados');
@@ -63,7 +63,39 @@ export default function Main({ slaConfig }) {
         }
         setAudioPermissionGranted(true);
         localStorage.setItem('audioPermissionGranted', 'true');
-    };
+    }, []);
+
+    const processAlertQueue = useCallback(() => {
+        if (alertaQueue.current.length === 0 || isSpeaking.current) return;
+        
+        const nextAlert = alertaQueue.current.shift();
+        isSpeaking.current = true;
+        
+        setAlerta(nextAlert.displayMessage);
+        
+        if (slaConfig.voiceEnabled && audioPermissionGranted) {
+            const utterance = new SpeechSynthesisUtterance(nextAlert.voiceMessage);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 0.9;
+            utterance.onend = () => {
+                isSpeaking.current = false;
+                setAlerta(null);
+                setTimeout(() => processAlertQueue(), 500);
+            };
+            utterance.onerror = () => {
+                isSpeaking.current = false;
+                setAlerta(null);
+                setTimeout(() => processAlertQueue(), 500);
+            };
+            window.speechSynthesis.speak(utterance);
+        } else {
+            setTimeout(() => {
+                setAlerta(null);
+                isSpeaking.current = false;
+                setTimeout(() => processAlertQueue(), 500);
+            }, 3500);
+        }
+    }, [slaConfig, audioPermissionGranted]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -131,39 +163,7 @@ export default function Main({ slaConfig }) {
         } catch (error) {
             console.error("Erro:", error);
         }
-    }, [slaConfig, audioPermissionGranted]);
-
-    const processAlertQueue = useCallback(() => {
-        if (alertaQueue.current.length === 0 || isSpeaking.current) return;
-        
-        const nextAlert = alertaQueue.current.shift();
-        isSpeaking.current = true;
-        
-        setAlerta(nextAlert.displayMessage);
-        
-        if (slaConfig.voiceEnabled && audioPermissionGranted) {
-            const utterance = new SpeechSynthesisUtterance(nextAlert.voiceMessage);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 0.9;
-            utterance.onend = () => {
-                isSpeaking.current = false;
-                setAlerta(null);
-                setTimeout(() => processAlertQueue(), 500);
-            };
-            utterance.onerror = () => {
-                isSpeaking.current = false;
-                setAlerta(null);
-                setTimeout(() => processAlertQueue(), 500);
-            };
-            window.speechSynthesis.speak(utterance);
-        } else {
-            setTimeout(() => {
-                setAlerta(null);
-                isSpeaking.current = false;
-                setTimeout(() => processAlertQueue(), 500);
-            }, 3500);
-        }
-    }, [slaConfig, audioPermissionGranted]);
+    }, [slaConfig, audioPermissionGranted, processAlertQueue]);
 
     useEffect(() => {
         fetchData();
@@ -218,7 +218,7 @@ export default function Main({ slaConfig }) {
         }
     }, [ticketsAbertos, slaConfig, audioPermissionGranted, processAlertQueue]);
 
-    // Calcular tempo médio de resolução - CORRIGIDO
+    // Calcular tempo médio de resolução
     const avgTimeFormatted = useMemo(() => {
         const closedTasks = tasks.filter(t => t.is_closed === true && t.close_date);
         if (closedTasks.length === 0) return '0h';
@@ -268,7 +268,7 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS (GRANDE) */}
+            {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS */}
             <div className={style.mainSection}>
                 <Tabela dados={ticketsAbertos} titulo="🎯 TICKETS ABERTOS" variante="aberto" slaConfig={slaConfig} />
             </div>
