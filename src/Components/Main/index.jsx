@@ -200,7 +200,7 @@ export default function Main({ slaConfig }) {
         } catch (error) {
             console.error("Erro:", error);
         }
-    }, [slaConfig, audioPermissionGranted, processNextAlert]);
+    }, [slaConfig, processNextAlert]);
 
     useEffect(() => {
         fetchData();
