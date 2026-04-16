@@ -156,7 +156,7 @@
     }
 }
 
-/* Status de SLA - Suporte (30-45 min) */
+/* Status de SLA */
 .statusCritical {
     background: #ef4444;
     color: white;
@@ -273,6 +273,10 @@
     background: #334155;
 }
 
+/* ============================================ */
+/* MELHORIAS DE FONTES E LEGIBILIDADE          */
+/* ============================================ */
+
 /* Aumentar fontes para melhor legibilidade */
 .elementTableAbertos, 
 .elementTableAndamento, 
@@ -318,4 +322,98 @@
 .labelsGridFinalizados, .elementTableFinalizados {
     grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
     gap: 16px !important;
+}
+
+/* ============================================ */
+/* AUMENTAR FONTES DA TABELA PRINCIPAL          */
+/* ============================================ */
+
+.containerTable {
+    font-size: 16px;
+}
+
+.tableHeader h3 {
+    font-size: 22px !important;
+    padding: 8px 0;
+}
+
+.tableHeader .badge {
+    font-size: 16px !important;
+    padding: 6px 14px !important;
+}
+
+/* Labels do cabeçalho */
+.labelsGridAbertos span {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Linhas da tabela */
+.elementTableAbertos {
+    font-size: 15px !important;
+    padding: 14px 18px !important;
+}
+
+.elementTableAbertos div {
+    font-size: 15px !important;
+}
+
+/* ID do ticket */
+.elementTableAbertos div:first-child {
+    font-size: 16px !important;
+    font-weight: bold;
+}
+
+/* Nome do cliente */
+.elementTableAbertos div:nth-child(2) {
+    font-size: 15px !important;
+    font-weight: 600;
+}
+
+/* Tempo aberto */
+.elementTableAbertos div:nth-child(3) {
+    font-family: monospace;
+    font-size: 14px !important;
+    font-weight: 500;
+}
+
+/* Status badge */
+.elementTableAbertos div:nth-child(4) span {
+    font-size: 13px !important;
+    padding: 6px 12px !important;
+    white-space: nowrap;
+}
+
+/* Responsável */
+.elementTableAbertos div:nth-child(5) {
+    font-size: 14px !important;
+}
+
+/* Grid mais largo para Tickets Abertos */
+.labelsGridAbertos, .elementTableAbertos {
+    grid-template-columns: 80px 2.2fr 120px 1.6fr 1.4fr !important;
+    gap: 16px !important;
+    padding: 14px 20px !important;
+}
+
+/* Ajuste responsivo */
+@media (max-width: 1200px) {
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr !important;
+        gap: 12px !important;
+        padding: 12px 16px !important;
+    }
+    
+    .elementTableAbertos {
+        font-size: 13px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 60px 1.5fr 90px 1.2fr 1.1fr !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+    }
 }

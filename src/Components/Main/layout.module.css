@@ -177,3 +177,25 @@
         min-width: 120px;
     }
 }
+
+/* Aumentar tamanho da seção principal */
+.mainSection {
+    flex: 2.5;
+    min-height: 450px;
+}
+
+/* Ajustes para melhor visualização */
+.metricValue {
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.metricLabel {
+    font-size: 14px;
+}
+
+/* Ajuste da barra de métricas */
+.metricsBar {
+    padding: 16px 24px;
+    gap: 20px;
+}

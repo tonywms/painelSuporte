@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Tabela from './Tabela/index';
 import style from './layout.module.css';
 
-// Função para formatar minutos
+// Função para formatar minutos em formato legível
 const formatMinutes = (minutes) => {
     if (!minutes && minutes !== 0) return '0min';
     const absMinutes = Math.abs(minutes);
@@ -53,7 +53,7 @@ export default function Main({ slaConfig }) {
     const alertadosRef = useRef(new Set());
     const novosTicketsRef = useRef(new Set());
 
-    const ativarAlertas = useCallback(() => {
+    const ativarAlertas = () => {
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
             const testUtterance = new SpeechSynthesisUtterance('Alertas de voz ativados');
@@ -63,8 +63,9 @@ export default function Main({ slaConfig }) {
         }
         setAudioPermissionGranted(true);
         localStorage.setItem('audioPermissionGranted', 'true');
-    }, []);
+    };
 
+    // Processador de alertas
     const processAlertQueue = useCallback(() => {
         if (alertaQueue.current.length === 0 || isSpeaking.current) return;
         
@@ -124,16 +125,13 @@ export default function Main({ slaConfig }) {
                             task.slaMessage = `🟢 Normal (${formatSlaTime(minutesDiff)})`;
                         } else if (minutesDiff <= slaConfig.supportWarningTime) {
                             task.slaStatus = 'warning';
-                            task.slaMessage = `⚠️ Atenção (${formatSlaTime(minutesDiff)})`;
+                            task.slaMessage = `🟡 Atenção (${formatSlaTime(minutesDiff)})`;
                         } else if (minutesDiff <= slaConfig.supportResolutionTime) {
                             task.slaStatus = 'critical';
                             task.slaMessage = `🔴 URGENTE (${formatSlaTime(minutesDiff)})`;
-                        } else if (minutesDiff <= slaConfig.escalationTime) {
-                            task.slaStatus = 'dev';
-                            task.slaMessage = `🔄 Escalonar (${formatSlaTime(minutesDiff)})`;
                         } else {
-                            task.slaStatus = 'devCritical';
-                            task.slaMessage = `💻 DEV URGENTE (${formatSlaTime(minutesDiff)})`;
+                            task.slaStatus = 'critical';
+                            task.slaMessage = `🔴 ATRASADO (${formatSlaTime(minutesDiff)})`;
                         }
                     }
                 }
@@ -145,6 +143,8 @@ export default function Main({ slaConfig }) {
                 !novosTicketsRef.current.has(t.id) &&
                 isTicketFromToday(t.created_at)
             );
+            
+            console.log('Novos tickets de HOJE encontrados:', novosTickets.length);
             
             novosTickets.forEach(ticket => {
                 novosTicketsRef.current.add(ticket.id);
@@ -158,7 +158,7 @@ export default function Main({ slaConfig }) {
             setLastRefresh(new Date());
             
             if (novosTickets.length > 0 && alertaQueue.current.length > 0 && !isSpeaking.current && audioPermissionGranted) {
-                processAlertQueue();
+                setTimeout(() => processAlertQueue(), 300);
             }
         } catch (error) {
             console.error("Erro:", error);
@@ -201,6 +201,8 @@ export default function Main({ slaConfig }) {
         });
     }, [tasks, slaConfig.finishedDays]);
 
+    // const ticketsAguardando = useMemo(() => 
+    //     tasks.filter(t => t.board_stage_name === "A fazer"), [tasks]);
     // Alertas SLA
     useEffect(() => {
         const ticketsAtrasados = ticketsAbertos.filter(t => 
@@ -309,6 +311,7 @@ export default function Main({ slaConfig }) {
         </main>
     );
 }
+
 /*
 vercel --prod
 */
