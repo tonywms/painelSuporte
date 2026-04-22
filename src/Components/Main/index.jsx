@@ -78,15 +78,34 @@ export default function Main({ slaConfig }) {
         };
     }, []);
 
-    const ativarAlertas = () => {
+        const ativarAlertas = () => {
+        console.log('🔊 Ativando alertas de voz...');
+        
+        // Forçar o speechSynthesis a "acordar" no desktop
         if (window.speechSynthesis) {
             try {
+                // Cancela qualquer fala pendente
                 window.speechSynthesis.cancel();
-                safeSpeak('Alertas de voz ativados', null);
-            } catch (e) {
-                console.log('SpeechSynthesis não disponível');
+                
+                // Tenta falar algo pequeno para ativar (às vezes precisa)
+                const testUtterance = new SpeechSynthesisUtterance(' ');
+                testUtterance.volume = 0;
+                window.speechSynthesis.speak(testUtterance);
+                
+                // Pequeno delay e depois fala a mensagem real
+                setTimeout(() => {
+                    const welcomeMsg = new SpeechSynthesisUtterance('Alertas de voz ativados');
+                    welcomeMsg.lang = 'pt-BR';
+                    welcomeMsg.rate = 0.9;
+                    welcomeMsg.volume = 1;
+                    window.speechSynthesis.speak(welcomeMsg);
+                }, 100);
+                
+            } catch(e) {
+                console.log('Erro ao ativar voz:', e);
             }
         }
+        
         setAudioPermissionGranted(true);
         localStorage.setItem('audioPermissionGranted', 'true');
     };
@@ -181,30 +200,31 @@ export default function Main({ slaConfig }) {
 
 
             // Verificar novos tickets de HOJE
-            const novosTickets = formattedTasks.filter(t => 
-                (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
-                !novosTicketsRef.current.has(t.id) &&
-                isTicketFromToday(t.created_at)
-            );
+            // Verificar novos tickets de HOJE
+        const novosTickets = formattedTasks.filter(t => 
+            (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
+            !novosTicketsRef.current.has(t.id) &&
+            isTicketFromToday(t.created_at)
+        );
 
-            console.log('📢 Novos tickets de HOJE encontrados:', novosTickets.length);
+        console.log('📢 Novos tickets encontrados:', novosTickets.length);
 
-            // Adicionar novos tickets à fila (DOIS ALERTAS POR TICKET - SEM ATROPELOS)
-            for (const ticket of novosTickets) {
-                novosTicketsRef.current.add(ticket.id);
-                
-                // Primeiro alerta: NOVO TICKET
-                alertaQueue.current.push({
-                    displayMessage: `📢 NOVO TICKET! #${ticket.id} - ${ticket.client_name}`,
-                    voiceMessage: `Novo ticket ${ticket.id} do cliente ${ticket.client_name}.`
-                });
-                
-                // Segundo alerta: PRAZO PARA ASSUMIR
-                alertaQueue.current.push({
-                    displayMessage: `⏰ Ticket #${ticket.id} - Assuma em ${slaConfig.supportTakeoverTime} minutos!`,
-                    voiceMessage: `Assuma o ticket ${ticket.id} em ${slaConfig.supportTakeoverTime} minutos.`
-                });
-            }
+        // Adicionar DOIS alertas por ticket (ordem correta, sem atropelo)
+        for (const ticket of novosTickets) {
+            novosTicketsRef.current.add(ticket.id);
+            
+            // 1º ALERTA: NOVO TICKET
+            alertaQueue.current.push({
+                displayMessage: `📢 NOVO TICKET! #${ticket.id} - ${ticket.client_name}`,
+                voiceMessage: `Novo ticket ${ticket.id} do cliente ${ticket.client_name}.`
+            });
+            
+            // 2º ALERTA: PRAZO PARA ASSUMIR
+            alertaQueue.current.push({
+                displayMessage: `⏰ Ticket #${ticket.id} - Assuma em ${slaConfig.supportTakeoverTime} minutos!`,
+                voiceMessage: `Assuma o ticket ${ticket.id} em ${slaConfig.supportTakeoverTime} minutos.`
+            });
+        }
 
             setTasks(formattedTasks);
             setLastRefresh(new Date());
@@ -344,6 +364,7 @@ export default function Main({ slaConfig }) {
             </div>
 
             {/* Modal de áudio */}
+            {/* Modal de áudio - ESSENCIAL para desktop */}
             {!audioPermissionGranted && (
                 <div className={style.audioModal}>
                     <div className={style.audioCard}>
@@ -352,7 +373,7 @@ export default function Main({ slaConfig }) {
                         <p className={style.audioText}>
                             Para receber alertas sonoros, clique no botão abaixo.
                             <br /><br />
-                            <strong style={{ color: '#facc15' }}>⚠️ Use o OK do controle</strong>
+                            <strong style={{ color: '#facc15' }}>⚠️ Clique aqui para ativar o áudio</strong>
                         </p>
                         <button className={style.audioButton} onClick={ativarAlertas}>
                             🔊 ATIVAR ALERTAS
