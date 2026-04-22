@@ -306,9 +306,14 @@ export default function Main({ slaConfig }) {
         return () => clearInterval(interval);
     }, [fetchData, isTv]);
 
+    // Carregar preferência de voz do localStorage
     useEffect(() => {
         const saved = localStorage.getItem('audioPermissionGranted');
-        if (saved === 'true') setAudioPermissionGranted(true);
+        console.log('🔊 Carregando saved do localStorage:', saved);
+        if (saved === 'true') {
+            setAudioPermissionGranted(true);
+            console.log('🔊 audioPermissionGranted setado para true');
+        }
     }, []);
 
     // FILTROS
