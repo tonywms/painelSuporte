@@ -62,6 +62,7 @@ export default function Main({ slaConfig }) {
     const lastSuccessRef = useRef(null);
 
     // Detectar TV no início
+    // Detectar TV no início
     useEffect(() => {
         const tvDetected = isSamsungTV();
         setIsTv(tvDetected);
@@ -72,11 +73,31 @@ export default function Main({ slaConfig }) {
         window.addEventListener('online', () => setConnectionStatus('online'));
         window.addEventListener('offline', () => setConnectionStatus('offline'));
         
+        // ============================================
+        // NOVO CÓDIGO: Forçar ativação da voz após clique do usuário
+        // ============================================
+        const ativarVozAposClique = () => {
+            console.log('🖱️ Usuário clicou na página - ativando voz');
+            if (window.speechSynthesis && !audioPermissionGranted) {
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(' ');
+                    utterance.volume = 0;
+                    window.speechSynthesis.speak(utterance);
+                    console.log('🔊 Voz ativada por clique do usuário');
+                } catch(e) {}
+            }
+        };
+        
+        document.addEventListener('click', ativarVozAposClique);
+        // ============================================
+        
         return () => {
             window.removeEventListener('online', () => setConnectionStatus('online'));
             window.removeEventListener('offline', () => setConnectionStatus('offline'));
+            document.removeEventListener('click', ativarVozAposClique);
         };
-    }, []);
+    }, [audioPermissionGranted]); // <-- IMPORTANTE: adicionar audioPermissionGranted aqui
 
         const ativarAlertas = () => {
             console.log('🔊 Ativando alertas de voz...');

@@ -127,11 +127,24 @@ export const safeSpeak = (text, onEnd) => {
     };
     
     utterance.onerror = (event) => {
-      console.error('❌ Erro na fala:', event.error);
-      if (onEnd) onEnd();
-    };
+    console.error('❌ Erro na fala:', event.error);
     
-    // Para TV Samsung, precisa de um delay maior
+        // Tenta novamente após 1 segundo (usuário pode ter clicado entretanto)
+        setTimeout(() => {
+            try {
+                const retry = new SpeechSynthesisUtterance(text);
+                retry.lang = 'pt-BR';
+                retry.rate = 0.9;
+                retry.onend = onEnd;
+                window.speechSynthesis.speak(retry);
+                console.log('🔊 Tentativa 2 de falar:', text);
+            } catch(e) {
+                console.error('❌ Falha na segunda tentativa');
+                if (onEnd) onEnd();
+            }
+        }, 1000);
+    };
+        // Para TV Samsung, precisa de um delay maior
     const delay = isSamsungTV() ? 200 : 50;
     
     setTimeout(() => {
