@@ -135,6 +135,7 @@ export default function Main({ slaConfig }) {
 
     // Processa a fila de alertas - UM POR VEZ
     // Processa a fila de alertas - COM TIMEOUT DE SEGURANÇA (mantém seus botões)
+        // Processa a fila de alertas
     const processNextAlert = useCallback(() => {
         if (isProcessing.current) {
             console.log('⚠️ Já processando um alerta, aguardando...');
@@ -165,12 +166,11 @@ export default function Main({ slaConfig }) {
         }, 10000);
         
         // ============================================
-        // CORREÇÃO: Ler DIRECTAMENTE do localStorage
+        // CORREÇÃO: Usar SOMENTE o slaConfig.voiceEnabled
+        // Não depende mais do localStorage
         // ============================================
-        const vozAtivada = localStorage.getItem('audioPermissionGranted') === 'true';
-        
-        if (slaConfig.voiceEnabled && vozAtivada) {
-            console.log('🔊 [DEBUG] Entrou no IF da voz (via localStorage)');
+        if (slaConfig.voiceEnabled) {
+            console.log('🔊 [DEBUG] Voz ativada pelo ConfigPanel');
             console.log('🔊 [DEBUG] Mensagem:', nextAlert.voiceMessage);
             
             safeSpeak(nextAlert.voiceMessage, () => {
@@ -181,8 +181,7 @@ export default function Main({ slaConfig }) {
                 setTimeout(() => processNextAlert(), 500);
             });
         } else {
-            console.log('🔊 [DEBUG] ELSE - Voz desativada (via localStorage)');
-            console.log('🔊 [DEBUG] vozAtivada:', vozAtivada);
+            console.log('🔊 [DEBUG] Voz desativada no ConfigPanel');
             
             setTimeout(() => {
                 clearTimeout(safetyTimeout);
