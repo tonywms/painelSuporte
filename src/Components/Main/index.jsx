@@ -150,35 +150,28 @@ export default function Main({ slaConfig }) {
         
         console.log('🔔 Processando alerta:', nextAlert.displayMessage);
         
-        // Mostra o alerta visual
         setAlerta(nextAlert.displayMessage);
         
-        // TIMEOUT DE SEGURANÇA: Força fechamento do alerta após 10 segundos
-        // Isso evita congelamento se a voz travar
         const safetyTimeout = setTimeout(() => {
-            console.log('⚠️ TIMEOUT DE SEGURANÇA: Forçando fechamento do alerta');
-            
-            // Cancela voz se estiver travada
+            console.log('⚠️ TIMEOUT: Forçando fechamento automático');
+            setAlerta(null);
+            isProcessing.current = false;
             if (window.speechSynthesis) {
                 try {
                     window.speechSynthesis.cancel();
                 } catch(e) {}
             }
-            
-            setAlerta(null);
-            isProcessing.current = false;
-            
-            // Processa próximo alerta
             setTimeout(() => processNextAlert(), 500);
-        }, 10000); // 10 segundos máximo
+        }, 10000);
         
-        // Se voz estiver ativada
-        // Se voz estiver ativada
-        if (slaConfig.voiceEnabled && audioPermissionGranted) {
-            console.log('🔊 [DEBUG] Entrou no IF da voz');
+        // ============================================
+        // CORREÇÃO: Ler DIRECTAMENTE do localStorage
+        // ============================================
+        const vozAtivada = localStorage.getItem('audioPermissionGranted') === 'true';
+        
+        if (slaConfig.voiceEnabled && vozAtivada) {
+            console.log('🔊 [DEBUG] Entrou no IF da voz (via localStorage)');
             console.log('🔊 [DEBUG] Mensagem:', nextAlert.voiceMessage);
-            console.log('🔊 [DEBUG] slaConfig.voiceEnabled:', slaConfig.voiceEnabled);
-            console.log('🔊 [DEBUG] audioPermissionGranted:', audioPermissionGranted);
             
             safeSpeak(nextAlert.voiceMessage, () => {
                 console.log('🔊 Fala terminada, removendo alerta');
@@ -188,11 +181,9 @@ export default function Main({ slaConfig }) {
                 setTimeout(() => processNextAlert(), 500);
             });
         } else {
-            console.log('🔊 [DEBUG] Entrou no ELSE - Voz desativada');
-            console.log('🔊 [DEBUG] slaConfig.voiceEnabled:', slaConfig.voiceEnabled);
-            console.log('🔊 [DEBUG] audioPermissionGranted:', audioPermissionGranted);
+            console.log('🔊 [DEBUG] ELSE - Voz desativada (via localStorage)');
+            console.log('🔊 [DEBUG] vozAtivada:', vozAtivada);
             
-            // Sem voz, mantém o alerta visual por 4 segundos
             setTimeout(() => {
                 clearTimeout(safetyTimeout);
                 setAlerta(null);
@@ -200,7 +191,7 @@ export default function Main({ slaConfig }) {
                 setTimeout(() => processNextAlert(), 500);
             }, 4000);
         }
-    }, [slaConfig.voiceEnabled, audioPermissionGranted]);
+    }, [slaConfig.voiceEnabled]);
 
     const fetchData = useCallback(async () => {
         try {
