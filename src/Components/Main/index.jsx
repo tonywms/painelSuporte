@@ -79,36 +79,38 @@ export default function Main({ slaConfig }) {
     }, []);
 
         const ativarAlertas = () => {
-        console.log('🔊 Ativando alertas de voz...');
-        
-        // Forçar o speechSynthesis a "acordar" no desktop
-        if (window.speechSynthesis) {
-            try {
-                // Cancela qualquer fala pendente
-                window.speechSynthesis.cancel();
-                
-                // Tenta falar algo pequeno para ativar (às vezes precisa)
-                const testUtterance = new SpeechSynthesisUtterance(' ');
-                testUtterance.volume = 0;
-                window.speechSynthesis.speak(testUtterance);
-                
-                // Pequeno delay e depois fala a mensagem real
-                setTimeout(() => {
-                    const welcomeMsg = new SpeechSynthesisUtterance('Alertas de voz ativados');
-                    welcomeMsg.lang = 'pt-BR';
-                    welcomeMsg.rate = 0.9;
-                    welcomeMsg.volume = 1;
-                    window.speechSynthesis.speak(welcomeMsg);
-                }, 100);
-                
-            } catch(e) {
-                console.log('Erro ao ativar voz:', e);
+            console.log('🔊 Ativando alertas de voz...');
+            
+            // Forçar o speechSynthesis a "acordar" no desktop
+            if (window.speechSynthesis) {
+                try {
+                    // Cancela qualquer fala pendente
+                    window.speechSynthesis.cancel();
+                    
+                    // Tenta falar algo pequeno para ativar (às vezes precisa)
+                    const testUtterance = new SpeechSynthesisUtterance(' ');
+                    testUtterance.volume = 0;
+                    window.speechSynthesis.speak(testUtterance);
+                    
+                    // Pequeno delay e depois fala a mensagem real
+                    setTimeout(() => {
+                        const welcomeMsg = new SpeechSynthesisUtterance('Alertas de voz ativados');
+                        welcomeMsg.lang = 'pt-BR';
+                        welcomeMsg.rate = 0.9;
+                        welcomeMsg.volume = 1;
+                        window.speechSynthesis.speak(welcomeMsg);
+                    }, 100);
+                    
+                } catch(e) {
+                    console.log('Erro ao ativar voz:', e);
+                }
             }
-        }
-        
-        setAudioPermissionGranted(true);
-        localStorage.setItem('audioPermissionGranted', 'true');
-    };
+            
+            setAudioPermissionGranted(true);
+            localStorage.setItem('audioPermissionGranted', 'true');
+            
+            console.log('🔊 audioPermissionGranted setado para:', true);
+        };
 
     // Processa a fila de alertas - UM POR VEZ
     // Processa a fila de alertas - COM TIMEOUT DE SEGURANÇA (mantém seus botões)
