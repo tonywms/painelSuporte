@@ -92,14 +92,10 @@ export default function Main({ slaConfig }) {
     };
 
     // Processa a fila de alertas - UM POR VEZ
+    // Processa a fila de alertas - UM POR VEZ
     const processNextAlert = useCallback(() => {
-        if (isProcessing.current) {
-            return;
-        }
-        
-        if (alertaQueue.current.length === 0) {
-            return;
-        }
+        if (isProcessing.current) return;
+        if (alertaQueue.current.length === 0) return;
         
         const nextAlert = alertaQueue.current.shift();
         isProcessing.current = true;
@@ -108,7 +104,8 @@ export default function Main({ slaConfig }) {
         
         setAlerta(nextAlert.displayMessage);
         
-        if (false && slaConfig.voiceEnabled && audioPermissionGranted) {
+        // Voz ATIVADA novamente
+        if (slaConfig.voiceEnabled && audioPermissionGranted) {
             safeSpeak(nextAlert.voiceMessage, () => {
                 setAlerta(null);
                 isProcessing.current = false;
