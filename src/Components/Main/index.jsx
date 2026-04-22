@@ -93,42 +93,26 @@ export default function Main({ slaConfig }) {
 
     // Processa a fila de alertas - UM POR VEZ
     // Processa a fila de alertas - CORRIGIDO
-    const processNextAlert = useCallback(() => {
-        if (isProcessing.current) {
-            console.log('⚠️ Já processando um alerta, aguardando...');
-            return;
-        }
+        const processNextAlert = useCallback(() => {
+        if (isProcessing.current) return;
+        if (alertaQueue.current.length === 0) return;
         
-        if (alertaQueue.current.length === 0) {
-            return;
-        }
-        
-        const nextAlert = alertaQueue.current.shift();
+        const nextAlert = alertaQueue.current.shift(); // Pega o PRIMEIRO da fila
         isProcessing.current = true;
         
-        console.log('🔔 Processando alerta:', nextAlert.displayMessage);
-        
-        // Mostra o alerta visual
         setAlerta(nextAlert.displayMessage);
         
-        // Se voz estiver ativada
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
-            console.log('🔊 Tentando falar:', nextAlert.voiceMessage);
-            
             safeSpeak(nextAlert.voiceMessage, () => {
-                console.log('🔊 Fala terminada, removendo alerta');
                 setAlerta(null);
                 isProcessing.current = false;
-                // Processa próximo alerta após 1 segundo
-                setTimeout(() => processNextAlert(), 1000);
+                setTimeout(() => processNextAlert(), 500); // Próximo após 0.5s
             });
         } else {
-            console.log('🔇 Voz desativada, mostrando apenas alerta visual');
-            // Sem voz, mantém o alerta visual por 5 segundos
             setTimeout(() => {
                 setAlerta(null);
                 isProcessing.current = false;
-                setTimeout(() => processNextAlert(), 1000);
+                setTimeout(() => processNextAlert(), 500);
             }, 5000);
         }
     }, [slaConfig.voiceEnabled, audioPermissionGranted]);
@@ -195,23 +179,30 @@ export default function Main({ slaConfig }) {
                 return task;
             });
 
+
             // Verificar novos tickets de HOJE
             const novosTickets = formattedTasks.filter(t => 
                 (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
                 !novosTicketsRef.current.has(t.id) &&
                 isTicketFromToday(t.created_at)
             );
-            
-            if (novosTickets.length > 0) {
-                console.log('📢 Novos tickets de HOJE encontrados:', novosTickets.length);
-            }
-            
-            // Adicionar novos tickets à fila (UM POR UM)
+
+            console.log('📢 Novos tickets de HOJE encontrados:', novosTickets.length);
+
+            // Adicionar novos tickets à fila (DOIS ALERTAS POR TICKET - SEM ATROPELOS)
             for (const ticket of novosTickets) {
                 novosTicketsRef.current.add(ticket.id);
+                
+                // Primeiro alerta: NOVO TICKET
                 alertaQueue.current.push({
-                    displayMessage: `📢 NOVO TICKET! #${ticket.id} - ${ticket.client_name} | Assuma em ${slaConfig.supportTakeoverTime}min`,
-                    voiceMessage: `Novo ticket ${ticket.id} do cliente ${ticket.client_name}. Assuma em ${slaConfig.supportTakeoverTime} minutos.`
+                    displayMessage: `📢 NOVO TICKET! #${ticket.id} - ${ticket.client_name}`,
+                    voiceMessage: `Novo ticket ${ticket.id} do cliente ${ticket.client_name}.`
+                });
+                
+                // Segundo alerta: PRAZO PARA ASSUMIR
+                alertaQueue.current.push({
+                    displayMessage: `⏰ Ticket #${ticket.id} - Assuma em ${slaConfig.supportTakeoverTime} minutos!`,
+                    voiceMessage: `Assuma o ticket ${ticket.id} em ${slaConfig.supportTakeoverTime} minutos.`
                 });
             }
 
