@@ -111,28 +111,61 @@ export default function Main({ slaConfig }) {
     };
 
     // Processa a fila de alertas - UM POR VEZ
-    // Processa a fila de alertas - CORRIGIDO
-        const processNextAlert = useCallback(() => {
-        if (isProcessing.current) return;
-        if (alertaQueue.current.length === 0) return;
+    // Processa a fila de alertas - COM TIMEOUT DE SEGURANÇA (mantém seus botões)
+    const processNextAlert = useCallback(() => {
+        if (isProcessing.current) {
+            console.log('⚠️ Já processando um alerta, aguardando...');
+            return;
+        }
         
-        const nextAlert = alertaQueue.current.shift(); // Pega o PRIMEIRO da fila
+        if (alertaQueue.current.length === 0) {
+            return;
+        }
+        
+        const nextAlert = alertaQueue.current.shift();
         isProcessing.current = true;
         
+        console.log('🔔 Processando alerta:', nextAlert.displayMessage);
+        
+        // Mostra o alerta visual
         setAlerta(nextAlert.displayMessage);
         
+        // TIMEOUT DE SEGURANÇA: Força fechamento do alerta após 10 segundos
+        // Isso evita congelamento se a voz travar
+        const safetyTimeout = setTimeout(() => {
+            console.log('⚠️ TIMEOUT DE SEGURANÇA: Forçando fechamento do alerta');
+            
+            // Cancela voz se estiver travada
+            if (window.speechSynthesis) {
+                try {
+                    window.speechSynthesis.cancel();
+                } catch(e) {}
+            }
+            
+            setAlerta(null);
+            isProcessing.current = false;
+            
+            // Processa próximo alerta
+            setTimeout(() => processNextAlert(), 500);
+        }, 10000); // 10 segundos máximo
+        
+        // Se voz estiver ativada
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
             safeSpeak(nextAlert.voiceMessage, () => {
-                setAlerta(null);
-                isProcessing.current = false;
-                setTimeout(() => processNextAlert(), 500); // Próximo após 0.5s
-            });
-        } else {
-            setTimeout(() => {
+                console.log('🔊 Fala terminada, removendo alerta');
+                clearTimeout(safetyTimeout); // Cancela o timeout de segurança
                 setAlerta(null);
                 isProcessing.current = false;
                 setTimeout(() => processNextAlert(), 500);
-            }, 5000);
+            });
+        } else {
+            // Sem voz, mantém o alerta visual por 4 segundos
+            setTimeout(() => {
+                clearTimeout(safetyTimeout);
+                setAlerta(null);
+                isProcessing.current = false;
+                setTimeout(() => processNextAlert(), 500);
+            }, 4000);
         }
     }, [slaConfig.voiceEnabled, audioPermissionGranted]);
 
