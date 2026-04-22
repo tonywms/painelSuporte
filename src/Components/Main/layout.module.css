@@ -62,11 +62,14 @@
 .metricValue[data-type="andamento"] { color: #a855f7; }
 .metricValue[data-type="finalizado"] { color: #22c55e; }
 
-/* Alertas */
+/* Alertas - CORRIGIDO: centralizado e sem travar */
 .overlayAlerta {
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.9);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
     backdrop-filter: blur(12px);
     display: flex;
     justify-content: center;
@@ -78,25 +81,71 @@
 .boxAlerta {
     background: linear-gradient(135deg, #0f172a, #020617);
     border: 3px solid #ef4444;
-    padding: 32px 56px;
+    padding: 48px 64px;
     border-radius: 28px;
     text-align: center;
-    box-shadow: 0 0 70px rgba(239,68,68,.4);
-    max-width: 550px;
+    box-shadow: 0 0 70px rgba(239, 68, 68, 0.4);
+    max-width: 90%;
+    width: 600px;
+    position: relative;
 }
 
 .tituloAlerta {
     color: #ef4444;
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 800;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 }
 
 .mensagemAlerta {
     color: #e2e8f0;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 600;
     line-height: 1.4;
+}
+
+/* Botão OK do alerta */
+.okAlertButton {
+    margin-top: 32px;
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.okAlertButton:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+}
+
+/* Botão fechar alerta (X) */
+.closeAlertButton {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.closeAlertButton:hover {
+    background: rgba(239, 68, 68, 0.5);
+    color: white;
+    transform: scale(1.05);
 }
 
 /* Modal de ativação de áudio */
@@ -200,38 +249,6 @@
     gap: 20px;
 }
 
-/* Alertas - Garantir que o overlay pode ser removido */
-.overlayAlerta {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(12px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-    animation: fadeIn .25s ease;
-    pointer-events: none; /* Permite clicar através do overlay se necessário */
-}
-
-/* Classe para esconder o alerta - será aplicada via JavaScript se necessário */
-.overlayAlertaHidden {
-    display: none !important;
-}
-
-.boxAlerta {
-    background: linear-gradient(135deg, #0f172a, #020617);
-    border: 3px solid #ef4444;
-    padding: 32px 56px;
-    border-radius: 28px;
-    text-align: center;
-    box-shadow: 0 0 70px rgba(239, 68, 68, 0.4);
-    max-width: 550px;
-    pointer-events: auto;
-}
-
-/* Adicionar ao final do arquivo layout.module.css */
-
 /* Banner de erro da API */
 .apiErrorBanner {
     background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -304,26 +321,7 @@
     transform: scale(1.05);
 }
 
-/* Botão fechar alerta */
-.closeAlertButton {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.closeAlertButton:hover {
-    background: rgba(239, 68, 68, 0.8);
-    transform: scale(1.05);
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }

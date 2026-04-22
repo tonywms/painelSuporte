@@ -108,7 +108,7 @@ export default function Main({ slaConfig }) {
         
         setAlerta(nextAlert.displayMessage);
         
-        if (slaConfig.voiceEnabled && audioPermissionGranted) {
+        if (false && slaConfig.voiceEnabled && audioPermissionGranted) {
             safeSpeak(nextAlert.voiceMessage, () => {
                 setAlerta(null);
                 isProcessing.current = false;
@@ -361,7 +361,7 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* Alerta visual - FICA NA TELA ENQUANTO A VOZ FALA */}
+            {/* Alerta visual - CENTRALIZADO E SEM TRAVAR */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
@@ -375,6 +375,8 @@ export default function Main({ slaConfig }) {
                                 setAlerta(null);
                                 isProcessing.current = false;
                                 currentUtterance.current = null;
+                                // Limpa a fila também
+                                alertaQueue.current = [];
                                 setTimeout(() => processNextAlert(), 500);
                             }}
                             className={style.closeAlertButton}
@@ -385,6 +387,30 @@ export default function Main({ slaConfig }) {
                             {alerta.includes('SLA') ? '⚠️ ALERTA DE SLA ⚠️' : '📢 NOVO TICKET!'}
                         </h1>
                         <p className={style.mensagemAlerta}>{alerta}</p>
+                        <button 
+                            onClick={() => {
+                                if (currentUtterance.current) {
+                                    try {
+                                        window.speechSynthesis.cancel();
+                                    } catch(e) {}
+                                }
+                                setAlerta(null);
+                                isProcessing.current = false;
+                                currentUtterance.current = null;
+                            }}
+                            style={{
+                                marginTop: '24px',
+                                padding: '10px 24px',
+                                background: '#38bdf8',
+                                border: 'none',
+                                borderRadius: '12px',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            OK
+                        </button>
                     </div>
                 </div>
             )}

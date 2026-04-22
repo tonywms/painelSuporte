@@ -1,17 +1,21 @@
 // src/utils/tvCompatibility.js
 
+/* eslint-disable no-restricted-globals */
+
 // Polyfill globalThis local (caso não tenha carregado)
 if (typeof globalThis === 'undefined') {
   if (typeof window !== 'undefined') {
     window.globalThis = window;
-  } else if (typeof self !== 'undefined') {
-    self.globalThis = self;
+  } else if (typeof window.self !== 'undefined') {
+    window.globalThis = window.self;
   } else if (typeof global !== 'undefined') {
     global.globalThis = global;
   } else {
     this.globalThis = this;
   }
 }
+
+/* eslint-enable no-restricted-globals */
 
 // Detectar se está em uma TV Samsung
 export const isSamsungTV = () => {
@@ -76,7 +80,7 @@ export const tvFetch = (url, options = {}) => {
         reject(new Error('Timeout da requisição'));
       };
       
-      xhr.timeout = 30000; // 30 segundos
+      xhr.timeout = 30000;
       xhr.send(options.body || null);
       
     } catch (e) {
@@ -99,7 +103,6 @@ export const safeSpeak = (text, onEnd) => {
   }
   
   try {
-    // Cancelar qualquer fala anterior
     try {
       window.speechSynthesis.cancel();
     } catch(e) {}
@@ -114,7 +117,6 @@ export const safeSpeak = (text, onEnd) => {
       utterance.onerror = onEnd;
     }
     
-    // Pequeno delay para garantir que o cancel foi processado
     setTimeout(() => {
       try {
         window.speechSynthesis.speak(utterance);
@@ -130,21 +132,4 @@ export const safeSpeak = (text, onEnd) => {
     if (onEnd) onEnd();
     return null;
   }
-};
-
-// Delay seguro para TVs (substitui setTimeout com fallback)
-export const safeDelay = (callback, ms) => {
-  if (typeof setTimeout !== 'undefined') {
-    return setTimeout(callback, ms);
-  }
-  // Fallback usando performance
-  const start = Date.now();
-  const check = () => {
-    if (Date.now() - start >= ms) {
-      callback();
-    } else {
-      requestAnimationFrame(check);
-    }
-  };
-  requestAnimationFrame(check);
 };
