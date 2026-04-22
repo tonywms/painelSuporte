@@ -150,15 +150,25 @@ export default function Main({ slaConfig }) {
         }, 10000); // 10 segundos máximo
         
         // Se voz estiver ativada
+        // Se voz estiver ativada
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
+            console.log('🔊 [DEBUG] Entrou no IF da voz');
+            console.log('🔊 [DEBUG] Mensagem:', nextAlert.voiceMessage);
+            console.log('🔊 [DEBUG] slaConfig.voiceEnabled:', slaConfig.voiceEnabled);
+            console.log('🔊 [DEBUG] audioPermissionGranted:', audioPermissionGranted);
+            
             safeSpeak(nextAlert.voiceMessage, () => {
                 console.log('🔊 Fala terminada, removendo alerta');
-                clearTimeout(safetyTimeout); // Cancela o timeout de segurança
+                clearTimeout(safetyTimeout);
                 setAlerta(null);
                 isProcessing.current = false;
                 setTimeout(() => processNextAlert(), 500);
             });
         } else {
+            console.log('🔊 [DEBUG] Entrou no ELSE - Voz desativada');
+            console.log('🔊 [DEBUG] slaConfig.voiceEnabled:', slaConfig.voiceEnabled);
+            console.log('🔊 [DEBUG] audioPermissionGranted:', audioPermissionGranted);
+            
             // Sem voz, mantém o alerta visual por 4 segundos
             setTimeout(() => {
                 clearTimeout(safetyTimeout);
