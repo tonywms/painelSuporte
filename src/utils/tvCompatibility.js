@@ -2,7 +2,7 @@
 
 /* eslint-disable no-restricted-globals */
 
-// Polyfill globalThis local (caso não tenha carregado)
+// Polyfill globalThis local
 if (typeof globalThis === 'undefined') {
   if (typeof window !== 'undefined') {
     window.globalThis = window;
@@ -30,10 +30,9 @@ export const isSamsungTV = () => {
   }
 };
 
-// Fetch com fallback para XHR (mais compatível com TVs)
+// Fetch com fallback para XHR
 export const tvFetch = (url, options = {}) => {
   return new Promise((resolve, reject) => {
-    // Tentar fetch primeiro
     if (typeof window !== 'undefined' && window.fetch && !isSamsungTV()) {
       fetch(url, options)
         .then(response => {
@@ -47,7 +46,6 @@ export const tvFetch = (url, options = {}) => {
       return;
     }
 
-    // Fallback para XMLHttpRequest
     try {
       const xhr = new XMLHttpRequest();
       const method = options.method || 'GET';
@@ -89,46 +87,65 @@ export const tvFetch = (url, options = {}) => {
   });
 };
 
-// SpeechSynthesis compatível com TV
+// SpeechSynthesis CORRIGIDO - funciona em PC e TV
 export const safeSpeak = (text, onEnd) => {
   if (typeof window === 'undefined') {
     if (onEnd) onEnd();
     return null;
   }
   
+  // Verificar se speechSynthesis existe
   if (!window.speechSynthesis) {
-    console.log('SpeechSynthesis não suportado');
+    console.log('❌ SpeechSynthesis não suportado neste navegador');
     if (onEnd) onEnd();
     return null;
   }
   
   try {
+    // Cancelar qualquer fala anterior
     try {
       window.speechSynthesis.cancel();
-    } catch(e) {}
+    } catch(e) {
+      console.log('Erro ao cancelar fala anterior:', e);
+    }
     
+    // Criar utterance
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     utterance.rate = 0.9;
     utterance.volume = 1;
+    utterance.pitch = 1;
     
-    if (onEnd) {
-      utterance.onend = onEnd;
-      utterance.onerror = onEnd;
-    }
+    // Eventos
+    utterance.onstart = () => {
+      console.log('🔊 Falando:', text);
+    };
+    
+    utterance.onend = () => {
+      console.log('✅ Fala finalizada');
+      if (onEnd) onEnd();
+    };
+    
+    utterance.onerror = (event) => {
+      console.error('❌ Erro na fala:', event.error);
+      if (onEnd) onEnd();
+    };
+    
+    // Para TV Samsung, precisa de um delay maior
+    const delay = isSamsungTV() ? 200 : 50;
     
     setTimeout(() => {
       try {
         window.speechSynthesis.speak(utterance);
       } catch(e) {
-        console.error('Erro ao falar:', e);
+        console.error('Erro ao executar speak:', e);
         if (onEnd) onEnd();
       }
-    }, 100);
+    }, delay);
     
     return utterance;
   } catch (e) {
-    console.error('Erro no SpeechSynthesis:', e);
+    console.error('❌ Erro crítico no SpeechSynthesis:', e);
     if (onEnd) onEnd();
     return null;
   }

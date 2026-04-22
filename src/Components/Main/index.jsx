@@ -92,30 +92,43 @@ export default function Main({ slaConfig }) {
     };
 
     // Processa a fila de alertas - UM POR VEZ
-    // Processa a fila de alertas - UM POR VEZ
+    // Processa a fila de alertas - CORRIGIDO
     const processNextAlert = useCallback(() => {
-        if (isProcessing.current) return;
-        if (alertaQueue.current.length === 0) return;
+        if (isProcessing.current) {
+            console.log('⚠️ Já processando um alerta, aguardando...');
+            return;
+        }
+        
+        if (alertaQueue.current.length === 0) {
+            return;
+        }
         
         const nextAlert = alertaQueue.current.shift();
         isProcessing.current = true;
         
         console.log('🔔 Processando alerta:', nextAlert.displayMessage);
         
+        // Mostra o alerta visual
         setAlerta(nextAlert.displayMessage);
         
-        // Voz ATIVADA novamente
+        // Se voz estiver ativada
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
+            console.log('🔊 Tentando falar:', nextAlert.voiceMessage);
+            
             safeSpeak(nextAlert.voiceMessage, () => {
+                console.log('🔊 Fala terminada, removendo alerta');
                 setAlerta(null);
                 isProcessing.current = false;
-                setTimeout(() => processNextAlert(), 500);
+                // Processa próximo alerta após 1 segundo
+                setTimeout(() => processNextAlert(), 1000);
             });
         } else {
+            console.log('🔇 Voz desativada, mostrando apenas alerta visual');
+            // Sem voz, mantém o alerta visual por 5 segundos
             setTimeout(() => {
                 setAlerta(null);
                 isProcessing.current = false;
-                setTimeout(() => processNextAlert(), 500);
+                setTimeout(() => processNextAlert(), 1000);
             }, 5000);
         }
     }, [slaConfig.voiceEnabled, audioPermissionGranted]);
