@@ -1,0 +1,329 @@
+.layout {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 12px 20px 20px 20px;
+    overflow-y: auto;
+}
+
+/* TICKETS ABERTOS - COLUNA PRINCIPAL (ocupa mais espaço) */
+.mainSection {
+    flex: 2;
+    min-height: 400px;
+}
+
+/* Seção inferior com 2 colunas */
+.bottomSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    min-height: 300px;
+}
+
+/* Cards individuais */
+.columnFull {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Métricas em linha única */
+.metricsBar {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 20px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.metricItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.metricLabel {
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.metricValue {
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.metricValue[data-type="aberto"] { color: #facc15; }
+.metricValue[data-type="andamento"] { color: #a855f7; }
+.metricValue[data-type="finalizado"] { color: #22c55e; }
+
+/* Alertas */
+.overlayAlerta {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.9);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn .25s ease;
+}
+
+.boxAlerta {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    border: 3px solid #ef4444;
+    padding: 32px 56px;
+    border-radius: 28px;
+    text-align: center;
+    box-shadow: 0 0 70px rgba(239,68,68,.4);
+    max-width: 550px;
+}
+
+.tituloAlerta {
+    color: #ef4444;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.mensagemAlerta {
+    color: #e2e8f0;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* Modal de ativação de áudio */
+.audioModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.92);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+}
+
+.audioCard {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    border: 2px solid #38bdf8;
+    border-radius: 32px;
+    padding: 40px 56px;
+    text-align: center;
+    max-width: 480px;
+}
+
+.audioIcon {
+    font-size: 56px;
+    margin-bottom: 20px;
+}
+
+.audioTitle {
+    color: #38bdf8;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.audioText {
+    color: #94a3b8;
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 28px;
+}
+
+.audioButton {
+    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    border: none;
+    padding: 14px 36px;
+    border-radius: 20px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+}
+
+.audioNote {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+    .bottomSection {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .metricsBar {
+        flex-wrap: wrap;
+    }
+    
+    .metricItem {
+        min-width: 120px;
+    }
+}
+
+/* Aumentar tamanho da seção principal */
+.mainSection {
+    flex: 2.5;
+    min-height: 450px;
+}
+
+/* Ajustes para melhor visualização */
+.metricValue {
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.metricLabel {
+    font-size: 14px;
+}
+
+/* Ajuste da barra de métricas */
+.metricsBar {
+    padding: 16px 24px;
+    gap: 20px;
+}
+
+/* Alertas - Garantir que o overlay pode ser removido */
+.overlayAlerta {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn .25s ease;
+    pointer-events: none; /* Permite clicar através do overlay se necessário */
+}
+
+/* Classe para esconder o alerta - será aplicada via JavaScript se necessário */
+.overlayAlertaHidden {
+    display: none !important;
+}
+
+.boxAlerta {
+    background: linear-gradient(135deg, #0f172a, #020617);
+    border: 3px solid #ef4444;
+    padding: 32px 56px;
+    border-radius: 28px;
+    text-align: center;
+    box-shadow: 0 0 70px rgba(239, 68, 68, 0.4);
+    max-width: 550px;
+    pointer-events: auto;
+}
+
+/* Adicionar ao final do arquivo layout.module.css */
+
+/* Banner de erro da API */
+.apiErrorBanner {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.retryButton {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.retryButton:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.02);
+}
+
+/* Banner offline */
+.offlineBanner {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 16px;
+    animation: pulse 2s infinite;
+}
+
+/* Informações de atualização */
+.updateInfo {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.refreshButton {
+    background: rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.refreshButton:hover {
+    background: rgba(56, 189, 248, 0.3);
+    transform: scale(1.05);
+}
+
+/* Botão fechar alerta */
+.closeAlertButton {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.closeAlertButton:hover {
+    background: rgba(239, 68, 68, 0.8);
+    transform: scale(1.05);
+}

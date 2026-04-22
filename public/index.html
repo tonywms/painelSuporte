@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    
+    <!-- 🔥 POLYFILL PARA globalThis - ESSENCIAL PARA TV SAMSUNG 🔥 -->
+    <script>
+      // Polyfill para globalThis (navegadores antigos como TV Samsung)
+      (function() {
+        if (typeof globalThis === 'undefined') {
+          if (typeof window !== 'undefined') {
+            window.globalThis = window;
+          } else if (typeof self !== 'undefined') {
+            self.globalThis = self;
+          } else if (typeof global !== 'undefined') {
+            global.globalThis = global;
+          } else {
+            this.globalThis = this;
+          }
+        }
+      })();
+    </script>
+    
+    <!-- Polyfill para Array.prototype.at -->
+    <script>
+      if (!Array.prototype.at) {
+        Array.prototype.at = function(index) {
+          if (index < 0) {
+            return this[this.length + index];
+          }
+          return this[index];
+        };
+      }
+    </script>
+    
+    <!-- Polyfill para String.prototype.replaceAll -->
+    <script>
+      if (!String.prototype.replaceAll) {
+        String.prototype.replaceAll = function(search, replacement) {
+          return this.split(search).join(replacement);
+        };
+      }
+    </script>
+    
+    <!-- Polyfill para Promise.allSettled -->
+    <script>
+      if (!Promise.allSettled) {
+        Promise.allSettled = function(promises) {
+          return Promise.all(
+            promises.map(p =>
+              Promise.resolve(p).then(
+                value => ({ status: 'fulfilled', value }),
+                reason => ({ status: 'rejected', reason })
+              )
+            )
+          );
+        };
+      }
+    </script>
+    
+    <!-- Polyfill para Object.fromEntries -->
+    <script>
+      if (!Object.fromEntries) {
+        Object.fromEntries = function(entries) {
+          const obj = {};
+          for (const [key, value] of entries) {
+            obj[key] = value;
+          }
+          return obj;
+        };
+      }
+    </script>
+    
+    <!-- POLYFILLS para compatibilidade com TVs e navegadores antigos -->
+    <script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.0.0/dist/fetch.umd.js"></script>
+    
+    <!-- Script de diagnóstico para TV -->
+    <script>
+      (function() {
+        console.log('=== DIAGNÓSTICO TV ===');
+        console.log('User Agent:', navigator.userAgent);
+        console.log('globalThis existe?', typeof globalThis !== 'undefined');
+        console.log('Promise existe?', typeof Promise !== 'undefined');
+        console.log('fetch existe?', typeof fetch !== 'undefined');
+        console.log('window existe?', typeof window !== 'undefined');
+        console.log('Array.prototype.at existe?', typeof Array.prototype.at === 'function');
+        console.log('String.prototype.replaceAll existe?', typeof String.prototype.replaceAll === 'function');
+        
+        // Detectar problemas comuns
+        var problemas = [];
+        if (typeof globalThis === 'undefined') problemas.push('globalThis');
+        if (typeof Promise === 'undefined') problemas.push('Promise');
+        if (typeof fetch === 'undefined') problemas.push('fetch');
+        if (typeof Array.prototype.at !== 'function') problemas.push('Array.at');
+        if (typeof String.prototype.replaceAll !== 'function') problemas.push('String.replaceAll');
+        
+        if (problemas.length > 0) {
+          console.error('⚠️ Polyfills faltando para:', problemas.join(', '));
+          var mensagem = 'ATENÇÃO: Polyfills faltando na TV.\n';
+          mensagem += 'Faltando: ' + problemas.join(', ') + '\n';
+          mensagem += 'Algumas funções podem não funcionar corretamente.';
+          console.warn(mensagem);
+        } else {
+          console.log('✅ Todos os polyfills carregados com sucesso!');
+        }
+        
+        // Forçar uso do polyfill do fetch se necessário
+        if (typeof fetch === 'undefined' && typeof window !== 'undefined') {
+          console.warn('⚠️ Fetch não disponível, usando XHR fallback');
+        }
+      })();
+    </script>
+    
+    <link rel="icon" href="%PUBLIC_URL%/icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="description" content="Painel de Suporte WMSEXPERT - Gestão de Tickets RunRun.it" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>WMSEXPERT | Painel de Suporte</title>
+    
+    <style>
+      /* Estilos de fallback para garantir que a página mostre algo */
+      body {
+        margin: 0;
+        padding: 0;
+        background: #020617;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      /* Loading indicator enquanto React carrega */
+      .loading-fallback {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        color: #38bdf8;
+        font-size: 18px;
+        background: #020617;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="text-align: center; padding: 40px; color: white; background: #020617;">
+        <h2>⚠️ JavaScript está desabilitado</h2>
+        <p>Por favor, ative o JavaScript para usar o Painel de Suporte WMSEXPERT.</p>
+      </div>
+    </noscript>
+    
+    <div id="root">
+      <!-- Loading fallback enquanto React carrega -->
+      <div class="loading-fallback">
+        <div style="text-align: center;">
+          <div style="width: 50px; height: 50px; border: 4px solid #1e293b; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+          <p>Carregando Painel de Suporte...</p>
+          <p style="font-size: 12px; color: #64748b;">WMSEXPERT</p>
+        </div>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    
+    <!-- Error handler para capturar erros na TV -->
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        console.error('ERRO CAPTURADO:', msg, 'em', url, 'linha', line);
+        
+        // Tentar mostrar erro na tela para debug
+        var root = document.getElementById('root');
+        if (root && root.innerHTML.includes('loading-fallback')) {
+          root.innerHTML = '<div style="padding: 40px; color: #ef4444; text-align: center; background: #020617; min-height: 100vh;">' +
+            '<h2>⚠️ Erro ao carregar o painel</h2>' +
+            '<p style="color: #94a3b8;">' + msg + '</p>' +
+            '<p style="font-size: 12px; color: #64748b; margin-top: 20px;">Tente recarregar a página ou contate o suporte.</p>' +
+            '<button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #0ea5e9; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">🔄 Recarregar</button>' +
+            '</div>';
+        }
+        
+        return false;
+      };
+      
+      window.onunhandledrejection = function(event) {
+        console.error('PROMESSA REJEITADA:', event.reason);
+      };
+      
+      console.log('✅ Página inicial carregada');
+      console.log('📺 User Agent:', navigator.userAgent);
+      console.log('🕐 Data/Hora:', new Date().toLocaleString('pt-BR'));
+      
+      // Verificar se é TV Samsung
+      var ua = navigator.userAgent || '';
+      var isSamsungTV = ua.includes('SmartTV') || ua.includes('Samsung') || ua.includes('Tizen');
+      if (isSamsungTV) {
+        console.log('📺 DISPOSITIVO: TV Samsung detectada');
+        // Ajustar viewport para TV
+        var viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes');
+        }
+      } else {
+        console.log('💻 DISPOSITIVO: Navegador comum');
+      }
+    </script>
+  </body>
+</html>

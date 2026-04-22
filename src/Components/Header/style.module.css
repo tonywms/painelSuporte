@@ -1,0 +1,201 @@
+.header {
+    width: 100%;
+    padding: 16px 24px 0 24px;
+}
+
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    padding: 20px 28px;
+    background: linear-gradient(135deg, 
+        rgba(15, 23, 42, 0.95) 0%,
+        rgba(2, 6, 23, 0.95) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Lado Esquerdo */
+.headerLeft {
+    display: flex;
+    align-items: center;
+}
+
+.titleSection {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mainTitle {
+    font-size: 24px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ffffff 0%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.subTitle {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+/* Lado Direito - Flex alinhado */
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+/* Saudação */
+.greetingSection {
+    display: flex;
+    align-items: center;
+}
+
+.greetingText {
+    font-size: 14px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+/* Data e Hora */
+.datetimeSection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dateDisplay, .timeDisplay {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    background: rgba(2, 6, 23, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(56, 189, 248, 0.1);
+    white-space: nowrap;
+}
+
+.dateDisplay {
+    color: #94a3b8;
+}
+
+.timeDisplay {
+    color: #22c55e;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+}
+
+/* Botão Configurações */
+.configButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    color: #38bdf8;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.configButton:hover {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(56, 189, 248, 0.1));
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(56, 189, 248, 0.2);
+}
+
+/* Status do Sistema */
+.statusCard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: rgba(34, 197, 94, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.statusDot {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+
+.statusInfo {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.statusLabel {
+    font-size: 9px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.statusText {
+    font-size: 12px;
+    font-weight: 700;
+    color: #22c55e;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
+/* Responsivo - Para telas menores */
+@media (max-width: 1100px) {
+    .headerContent {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+    
+    .headerRight {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .headerRight {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+    
+    .datetimeSection {
+        flex-wrap: wrap;
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "short_name": "Painel Suporte",
+  "name": "WMSEXPERT - Painel de Suporte",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#020617"
+}

@@ -1,0 +1,113 @@
+/* CONTAINER PRINCIPAL */
+.containerConferido {
+    width: 100%;
+    height: 100%; /* Ocupa a altura total da coluna definida na Main */
+    background: #020617;
+    padding: 14px;
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* HEADER */
+.titleConferido {
+    width: 100%;
+    /* O background (gradient) deve ser passado via inline style no JSX */
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 70px;
+    border-radius: 12px;
+    align-items: center;
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 22px;
+}
+
+.badge {
+    background: #22c55e;
+    color: #022c22;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 0 12px rgba(34,197,94,0.7);
+    animation: pulseBadge 2s infinite;
+}
+
+/* BODY */
+.containerElementsFinalizados {
+    flex: 1; /* Faz o corpo ocupar todo o espaço restante abaixo do header */
+    overflow-y: auto;
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    padding-top: 12px;
+}
+
+/* Scrollbar estilizada para manter a estética dark */
+.containerElementsFinalizados::-webkit-scrollbar {
+    width: 6px;
+}
+
+.containerElementsFinalizados::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+
+/* LINHAS (As 3 colunas solicitadas: ID, Cliente, Usuário) */
+.ElementFinalizado {
+    display: grid;
+    grid-template-columns: 80px 1.5fr 1fr; /* ID, Cliente, Usuário */
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: left;
+    color: #e2e8f0;
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    animation: fadeSlide 0.4s ease;
+    transition: all 0.25s ease;
+}
+
+.ElementFinalizado:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Destaque para o ID da tarefa */
+.ElementFinalizado div:first-child {
+    color: #38bdf8;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* ANIMAÇÕES */
+@keyframes fadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseBadge {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}

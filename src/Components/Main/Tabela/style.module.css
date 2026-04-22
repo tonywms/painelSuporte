@@ -1,0 +1,428 @@
+.containerTable {
+    width: 100%;
+    background: rgba(2, 6, 23, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid rgba(56, 189, 248, 0.1);
+    transition: all 0.3s ease;
+}
+
+.containerTable:hover {
+    border-color: rgba(56, 189, 248, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.tableHeader {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.6));
+    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    border-radius: 20px 20px 0 0;
+}
+
+.tableHeader h3 {
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tableHeader .badge {
+    background: rgba(56, 189, 248, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #38bdf8;
+}
+
+.tableBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* GRID PARA TICKETS ABERTOS - 5 colunas */
+.labelsGridAbertos, .elementTableAbertos {
+    display: grid;
+    grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+}
+
+/* GRID PARA EM ANDAMENTO - 4 colunas - MAIS ESPAÇO */
+.labelsGridAndamento, .elementTableAndamento {
+    display: grid;
+    grid-template-columns: 70px 2fr 120px 1.5fr;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 20px;
+    width: 100%;
+}
+
+/* GRID PARA FINALIZADOS - 5 colunas */
+.labelsGridFinalizados, .elementTableFinalizados {
+    display: grid;
+    grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+}
+
+.labelsGridAbertos, .labelsGridAndamento, .labelsGridFinalizados {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    background: rgba(2, 6, 23, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+    margin-bottom: 8px;
+}
+
+.elementTableAbertos, .elementTableAndamento, .elementTableFinalizados {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.6));
+    border-radius: 12px;
+    margin-bottom: 8px;
+    color: #e2e8f0;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    animation: fadeInUp 0.3s ease;
+}
+
+.elementTableAbertos:hover, .elementTableAndamento:hover, .elementTableFinalizados:hover {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+    transform: translateX(4px);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* Responsivo para telas maiores - EM ANDAMENTO OCUPA MAIS ESPAÇO */
+@media (min-width: 1400px) {
+    .labelsGridAndamento, .elementTableAndamento {
+        grid-template-columns: 80px 2.2fr 140px 1.8fr;
+        gap: 20px;
+        padding: 16px 24px;
+    }
+    
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr;
+        gap: 16px;
+    }
+    
+    .labelsGridFinalizados, .elementTableFinalizados {
+        grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr;
+        gap: 16px;
+    }
+}
+
+/* Responsivo para telas médias */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .labelsGridAndamento, .elementTableAndamento {
+        grid-template-columns: 75px 2fr 130px 1.6fr;
+        gap: 18px;
+        padding: 14px 20px;
+    }
+}
+
+/* Responsivo para telas menores */
+@media (max-width: 1000px) {
+    .labelsGridAndamento, .elementTableAndamento {
+        grid-template-columns: 60px 1.5fr 100px 1.2fr;
+        gap: 10px;
+        padding: 10px 14px;
+    }
+    
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 60px 1.5fr 80px 1fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+    
+    .labelsGridFinalizados, .elementTableFinalizados {
+        grid-template-columns: 60px 1.5fr 80px 1fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+}
+
+/* Status de SLA */
+.statusCritical {
+    background: #ef4444;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    animation: pulseUrgent 1s infinite;
+    white-space: nowrap;
+}
+
+.statusWarning {
+    background: #f59e0b;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.statusNormal {
+    background: #22c55e;
+    color: #052e16;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.statusDev {
+    background: #8b5cf6;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.statusDefault {
+    background: #1e293b;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* Estilos para o texto dentro das células */
+.elementTableAbertos div, 
+.elementTableAndamento div, 
+.elementTableFinalizados div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ID do ticket - estilo monoespaçado */
+.elementTableAbertos div:first-child,
+.elementTableAndamento div:first-child,
+.elementTableFinalizados div:first-child {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #38bdf8;
+}
+
+/* Nome do cliente */
+.elementTableAbertos div:nth-child(2),
+.elementTableAndamento div:nth-child(2),
+.elementTableFinalizados div:nth-child(2) {
+    font-weight: 600;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulseUrgent {
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+/* Scrollbar estilizada */
+.tableBody::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.tableBody::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+}
+
+.tableBody::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+
+.tableBody::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* ============================================ */
+/* MELHORIAS DE FONTES E LEGIBILIDADE          */
+/* ============================================ */
+
+/* Aumentar fontes para melhor legibilidade */
+.elementTableAbertos, 
+.elementTableAndamento, 
+.elementTableFinalizados {
+    font-size: 15px !important;
+    padding: 14px 18px !important;
+}
+
+.elementTableAbertos div, 
+.elementTableAndamento div, 
+.elementTableFinalizados div {
+    font-size: 15px;
+}
+
+/* Status badges maiores */
+.statusCritical, .statusWarning, .statusNormal, .statusDev, .statusDefault {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+/* Badge do header maior */
+.tableHeader .badge {
+    padding: 6px 14px !important;
+    font-size: 14px !important;
+}
+
+.tableHeader h3 {
+    font-size: 20px !important;
+}
+
+/* Grids com colunas mais largas */
+.labelsGridAbertos, .elementTableAbertos {
+    grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
+    gap: 16px !important;
+}
+
+.labelsGridAndamento, .elementTableAndamento {
+    grid-template-columns: 80px 2fr 130px 1.8fr !important;
+    gap: 16px !important;
+}
+
+.labelsGridFinalizados, .elementTableFinalizados {
+    grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
+    gap: 16px !important;
+}
+
+/* ============================================ */
+/* AUMENTAR FONTES DA TABELA PRINCIPAL          */
+/* ============================================ */
+
+.containerTable {
+    font-size: 16px;
+}
+
+.tableHeader h3 {
+    font-size: 22px !important;
+    padding: 8px 0;
+}
+
+.tableHeader .badge {
+    font-size: 16px !important;
+    padding: 6px 14px !important;
+}
+
+/* Labels do cabeçalho */
+.labelsGridAbertos span {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: #cbd5e1 !important;
+    text-align: center; /* Centraliza o texto horizontalmente */
+}
+
+/* Linhas da tabela */
+.elementTableAbertos {
+    font-size: 15px !important;
+    padding: 14px 18px !important;
+    text-align: center; /* Centraliza o texto horizontalmente */
+    
+}
+
+.elementTableAbertos div {
+    font-size: 15px !important;
+}
+
+/* ID do ticket */
+.elementTableAbertos div:first-child {
+    font-size: 25px !important;
+    font-weight: bold;
+    text-align: center; /* Centraliza o texto horizontalmente */
+}
+
+/* Nome do cliente */
+.elementTableAbertos div:nth-child(2) {
+    font-size: 25px !important;
+    font-weight: 600;
+    text-align: center; /* Centraliza o texto horizontalmente */
+}
+
+/* Tempo aberto */
+.elementTableAbertos div:nth-child(3) {
+    font-family: monospace;
+    font-size: 23px !important;
+    font-weight: 500;
+    text-align: center; /* Centraliza o texto horizontalmente */
+}
+
+/* Status badge */
+.elementTableAbertos div:nth-child(4) span {
+    font-size: 23px !important;
+    padding: 6px 12px !important;
+    white-space: nowrap;
+    text-align: center; /* Centraliza o texto horizontalmente */
+}
+
+/* Responsável */
+.elementTableAbertos div:nth-child(5) {
+    font-weight: 600;
+    font-size: 23px !important;
+    text-align: center; /* Centraliza o texto horizontalmente */
+}
+
+/* Grid mais largo para Tickets Abertos */
+.labelsGridAbertos, .elementTableAbertos {
+    grid-template-columns: 80px 2.2fr 120px 1.6fr 1.4fr !important;
+    gap: 16px !important;
+    padding: 14px 20px !important;
+}
+
+/* Ajuste responsivo */
+@media (max-width: 1200px) {
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr !important;
+        gap: 12px !important;
+        padding: 12px 16px !important;
+    }
+    
+    .elementTableAbertos {
+        font-size: 13px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .labelsGridAbertos, .elementTableAbertos {
+        grid-template-columns: 60px 1.5fr 90px 1.2fr 1.1fr !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+    }
+}

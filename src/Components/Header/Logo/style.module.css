@@ -1,0 +1,17 @@
+.containerLogo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo {
+    height: 45px;
+    width: auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+    transform: scale(1.02);
+}
