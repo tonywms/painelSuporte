@@ -229,3 +229,312 @@
     max-width: 550px;
     pointer-events: auto;
 }
+
+/* ==================== CARDS DOS ATENDENTES ==================== */
+.atendentesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.atendenteCard {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.9));
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.atendenteCard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.atendenteAvatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.atendenteInfo {
+    flex: 1;
+}
+
+.atendenteNome {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.atendenteStats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.statBadge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.statBadge.andamento {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.statBadge.finalizado {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.statBadge.total {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* Responsivo para telas pequenas */
+@media (max-width: 768px) {
+    .atendentesGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .atendenteCard {
+        padding: 12px 16px;
+    }
+    
+    .atendenteAvatar {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .atendenteNome {
+        font-size: 16px;
+    }
+    
+    .statBadge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+}
+
+/* ==================== CARDS DOS ATENDENTES ==================== */
+.atendentesGrid {
+    margin-top: 20px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(2, 6, 23, 0.4));
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.atendentesHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.atendentesSub {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 400;
+}
+
+.atendentesCards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.atendenteCard {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.8));
+    border-radius: 16px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    transition: all 0.3s ease;
+}
+
+.atendenteCard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+}
+
+.atendenteAvatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+.atendenteInfo {
+    flex: 1;
+}
+
+.atendenteNome {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+}
+
+.atendenteStats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.statBadge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.statBadge.andamento {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.statBadge.finalizado {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.statBadge.total {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .atendentesCards {
+        grid-template-columns: 1fr;
+    }
+    
+    .atendenteCard {
+        padding: 12px 14px;
+    }
+    
+    .atendenteAvatar {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .atendenteNome {
+        font-size: 14px;
+    }
+    
+    .statBadge {
+        font-size: 10px;
+        padding: 2px 8px;
+    }
+}
+
+/* ========== DESTAQUE PARA TICKETS ABERTOS ========== */
+.highlightHeader {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(250, 204, 21, 0.05));
+    border: 1px solid rgba(250, 204, 21, 0.3);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.highlightIcon {
+    font-size: 32px;
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.5));
+}
+
+.highlightTitle {
+    font-size: 20px;
+    font-weight: 800;
+    color: #facc15;
+    letter-spacing: 1px;
+}
+
+.highlightSub {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.highlightBadge {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    padding: 8px 20px;
+    border-radius: 40px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #000;
+    margin-left: auto;
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+}
+
+/* ========== DESTAQUE NA MÉTRICA DE TICKETS ABERTOS ========== */
+.metricValueHighlight {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #facc15, #eab308);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
+}
+
+.metricValueHighlight[data-type="aberto"] {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

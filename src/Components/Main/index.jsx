@@ -42,15 +42,55 @@ const isTicketFromToday = (createdAt) => {
            ticketDate.getFullYear() === today.getFullYear();
 };
 
+// Função para calcular tempo útil (horário comercial)
+const calcularMinutosUteis = (dataInicio) => {
+    const inicio = new Date(dataInicio);
+    const agora = new Date();
+    
+    if (inicio >= agora) return 0;
+    
+    let totalMinutos = 0;
+    let current = new Date(inicio);
+    
+    const inicioExpediente = 8;
+    const fimExpedienteSegQui = 18;
+    const fimExpedienteSex = 17;
+    
+    while (current < agora) {
+        const diaSemana = current.getDay();
+        const hora = current.getHours();
+        const minutos = current.getMinutes();
+        
+        if (diaSemana >= 1 && diaSemana <= 5) {
+            const fimExpediente = (diaSemana === 5) ? fimExpedienteSex : fimExpedienteSegQui;
+            
+            if (hora >= inicioExpediente && hora < fimExpediente) {
+                const minutosNoDia = (hora * 60 + minutos);
+                const fimExpedienteMinutos = fimExpediente * 60;
+                
+                if (minutosNoDia < fimExpedienteMinutos) {
+                    const minutosRestantesNoDia = fimExpedienteMinutos - minutosNoDia;
+                    const minutosAteAgora = Math.min(minutosRestantesNoDia, (agora - current) / (1000 * 60));
+                    totalMinutos += minutosAteAgora;
+                }
+            }
+        }
+        
+        current = new Date(current.getTime() + 60000);
+    }
+    
+    return totalMinutos;
+};
+
 export default function Main({ slaConfig }) {
     const [tasks, setTasks] = useState([]);
     const [alerta, setAlerta] = useState(null);
     const [lastRefresh, setLastRefresh] = useState(new Date());
     const [audioPermissionGranted, setAudioPermissionGranted] = useState(false);
     
-    const alertaQueue = useRef([]); // Fila de alertas pendentes
-    const isProcessing = useRef(false); // Controla se está processando um alerta
-    const currentUtterance = useRef(null); // Referência para a fala atual
+    const alertaQueue = useRef([]);
+    const isProcessing = useRef(false);
+    const currentUtterance = useRef(null);
     const alertadosRef = useRef(new Set());
     const novosTicketsRef = useRef(new Set());
 
@@ -66,32 +106,25 @@ export default function Main({ slaConfig }) {
         localStorage.setItem('audioPermissionGranted', 'true');
     };
 
-    // Processa a fila de alertas - UM POR VEZ
     const processNextAlert = useCallback(() => {
-        // Se já está processando um alerta, não faz nada
         if (isProcessing.current) {
             console.log('⚠️ Já processando um alerta, aguardando...');
             return;
         }
         
-        // Se não tem alerta na fila, não faz nada
         if (alertaQueue.current.length === 0) {
             console.log('📭 Fila de alertas vazia');
             return;
         }
         
-        // Pega o próximo alerta da fila
         const nextAlert = alertaQueue.current.shift();
         isProcessing.current = true;
         
         console.log('🔔 Processando alerta:', nextAlert.displayMessage);
         
-        // Mostra o alerta visual
         setAlerta(nextAlert.displayMessage);
         
-        // Se voz estiver ativada, reproduz
         if (slaConfig.voiceEnabled && audioPermissionGranted) {
-            // Cancela qualquer fala anterior
             if (currentUtterance.current) {
                 window.speechSynthesis.cancel();
             }
@@ -103,18 +136,14 @@ export default function Main({ slaConfig }) {
             
             utterance.onend = () => {
                 console.log('✅ Fala finalizada, removendo alerta visual');
-                // Remove o alerta visual
                 setAlerta(null);
-                // Libera para o próximo alerta
                 isProcessing.current = false;
                 currentUtterance.current = null;
-                // Processa o próximo alerta na fila (se houver)
                 setTimeout(() => processNextAlert(), 500);
             };
             
             utterance.onerror = (e) => {
                 console.error('❌ Erro na voz:', e);
-                // Em caso de erro, remove o alerta e continua
                 setAlerta(null);
                 isProcessing.current = false;
                 currentUtterance.current = null;
@@ -123,7 +152,6 @@ export default function Main({ slaConfig }) {
             
             window.speechSynthesis.speak(utterance);
         } else {
-            // Sem voz, mantém o alerta visual por 5 segundos
             setTimeout(() => {
                 setAlerta(null);
                 isProcessing.current = false;
@@ -149,7 +177,7 @@ export default function Main({ slaConfig }) {
                 }
                 
                 if (task.created_at) {
-                    const minutesDiff = (new Date() - new Date(task.created_at)) / (1000 * 60);
+                    const minutesDiff = calcularMinutosUteis(task.created_at);
                     task.minutesOpen = minutesDiff;
                     task.timeOpenFormatted = formatMinutes(minutesDiff);
                     
@@ -172,7 +200,6 @@ export default function Main({ slaConfig }) {
                 return task;
             });
 
-            // Verificar novos tickets de HOJE
             const novosTickets = formattedTasks.filter(t => 
                 (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
                 !novosTicketsRef.current.has(t.id) &&
@@ -181,7 +208,6 @@ export default function Main({ slaConfig }) {
             
             console.log('📢 Novos tickets de HOJE encontrados:', novosTickets.length);
             
-            // Adicionar novos tickets à fila (UM POR UM)
             for (const ticket of novosTickets) {
                 novosTicketsRef.current.add(ticket.id);
                 alertaQueue.current.push({
@@ -193,7 +219,6 @@ export default function Main({ slaConfig }) {
             setTasks(formattedTasks);
             setLastRefresh(new Date());
             
-            // Inicia processamento da fila se houver novos tickets e não estiver processando
             if (novosTickets.length > 0 && !isProcessing.current) {
                 setTimeout(() => processNextAlert(), 500);
             }
@@ -238,7 +263,7 @@ export default function Main({ slaConfig }) {
         });
     }, [tasks, slaConfig.finishedDays]);
 
-    // Alertas SLA (tickets atrasados)
+    // Alertas SLA
     useEffect(() => {
         const ticketsAtrasados = ticketsAbertos.filter(t => 
             t.minutesOpen > slaConfig.supportTakeoverTime && !alertadosRef.current.has(t.id)
@@ -257,22 +282,69 @@ export default function Main({ slaConfig }) {
         }
     }, [ticketsAbertos, slaConfig, processNextAlert]);
 
-    // Calcular tempo médio de resolução
-    const avgTimeFormatted = useMemo(() => {
-        const closedTasks = tasks.filter(t => t.is_closed === true && t.close_date);
-        if (closedTasks.length === 0) return '0h';
+    // ==================== CÁLCULO DE MÉTRICAS DOS ATENDENTES ====================
+    const calcularMetricasAtendentes = useMemo(() => {
+        const diasAtras = new Date();
+        diasAtras.setDate(diasAtras.getDate() - slaConfig.finishedDays);
         
-        let totalMinutes = 0;
-        for (let i = 0; i < closedTasks.length; i++) {
-            const task = closedTasks[i];
-            const created = new Date(task.created_at);
-            const closed = new Date(task.close_date);
-            const diffMinutes = (closed - created) / (1000 * 60);
-            totalMinutes += diffMinutes;
-        }
-        const avgMinutes = totalMinutes / closedTasks.length;
-        return formatMinutes(avgMinutes);
-    }, [tasks]);
+        const ticketsAndamentoAtendentes = ticketsAndamento.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
+        const ticketsFinalizadosAtendentes = ticketsFinalizados.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
+        
+        const atendentesMap = new Map();
+        
+        ticketsAndamentoAtendentes.forEach(ticket => {
+            const atendente = ticket.exibir_usuarios;
+            if (!atendentesMap.has(atendente)) {
+                atendentesMap.set(atendente, { em_andamento: 0, finalizados: 0, total: 0 });
+            }
+            atendentesMap.get(atendente).em_andamento++;
+            atendentesMap.get(atendente).total++;
+        });
+        
+        ticketsFinalizadosAtendentes.forEach(ticket => {
+            const atendente = ticket.exibir_usuarios;
+            if (!atendentesMap.has(atendente)) {
+                atendentesMap.set(atendente, { em_andamento: 0, finalizados: 0, total: 0 });
+            }
+            atendentesMap.get(atendente).finalizados++;
+            atendentesMap.get(atendente).total++;
+        });
+        
+        return Array.from(atendentesMap.entries())
+            .map(([nome, dados]) => ({ nome, ...dados }))
+            .sort((a, b) => b.total - a.total);
+    }, [ticketsAndamento, ticketsFinalizados, slaConfig.finishedDays]);
+
+    // Dados para exibir (com fallback para teste)
+        // ==================== CÁLCULO DE MÉTRICAS DOS ATENDENTES ====================
+    const dadosParaExibir = useMemo(() => {
+        const ticketsAndamentoAtendentes = ticketsAndamento.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
+        const ticketsFinalizadosAtendentes = ticketsFinalizados.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
+        
+        const atendentesMap = new Map();
+        
+        ticketsAndamentoAtendentes.forEach(ticket => {
+            const atendente = ticket.exibir_usuarios;
+            if (!atendentesMap.has(atendente)) {
+                atendentesMap.set(atendente, { em_andamento: 0, finalizados: 0, total: 0 });
+            }
+            atendentesMap.get(atendente).em_andamento++;
+            atendentesMap.get(atendente).total++;
+        });
+        
+        ticketsFinalizadosAtendentes.forEach(ticket => {
+            const atendente = ticket.exibir_usuarios;
+            if (!atendentesMap.has(atendente)) {
+                atendentesMap.set(atendente, { em_andamento: 0, finalizados: 0, total: 0 });
+            }
+            atendentesMap.get(atendente).finalizados++;
+            atendentesMap.get(atendente).total++;
+        });
+        
+        return Array.from(atendentesMap.entries())
+            .map(([nome, dados]) => ({ nome, ...dados }))
+            .sort((a, b) => b.total - a.total);
+    }, [ticketsAndamento, ticketsFinalizados]);
 
     return (
         <main className={style.layout}>
@@ -295,13 +367,12 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* Alerta visual - FICA NA TELA ENQUANTO A VOZ FALA */}
+            {/* Alerta visual */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
                         <button 
                             onClick={() => {
-                                // Botão para fechar manualmente (útil na TV)
                                 if (currentUtterance.current) {
                                     window.speechSynthesis.cancel();
                                 }
@@ -337,43 +408,55 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS */}
+            {/* CARDS DE DESEMPENHO DOS ATENDENTES */}
+            {dadosParaExibir.length > 0 && (
+                <div className={style.atendentesGrid}>
+                    <div className={style.atendentesHeader}>
+                        <span>👥 DESEMPENHO POR ATENDENTE</span>
+                        <span className={style.atendentesSub}>Últimos {slaConfig.finishedDays} dia(s)</span>
+                    </div>
+                    <div className={style.atendentesCards}>
+                        {dadosParaExibir.map((atendente) => (
+                            <div key={atendente.nome} className={style.atendenteCard}>
+                                <div className={style.atendenteAvatar}>
+                                    {atendente.nome.charAt(0).toUpperCase()}
+                                </div>
+                                <div className={style.atendenteInfo}>
+                                    <div className={style.atendenteNome}>{atendente.nome}</div>
+                                    <div className={style.atendenteStats}>
+                                        <span className={`${style.statBadge} ${style.andamento}`}>
+                                            ⚙️ {atendente.em_andamento}
+                                        </span>
+                                        <span className={`${style.statBadge} ${style.finalizado}`}>
+                                            ✅ {atendente.finalizados}
+                                        </span>
+                                        <span className={`${style.statBadge} ${style.total}`}>
+                                            📊 {atendente.total}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS (EM DESTAQUE) */}
             <div className={style.mainSection}>
-                <Tabela dados={ticketsAbertos} titulo="🎯 TICKETS ABERTOS" variante="aberto" slaConfig={slaConfig} />
+                <div className={style.highlightHeader}>
+                    <div className={style.highlightIcon}>🎯</div>
+                    <div>
+                        <div className={style.highlightTitle}>TICKETS ABERTOS</div>
+                        <div className={style.highlightSub}>Prioridade máxima de atendimento</div>
+                    </div>
+                    <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
+                </div>
+                <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
             </div>
 
-            {/* SEÇÃO INFERIOR - 2 COLUNAS */}
-            <div className={style.bottomSection}>
-                <div className={style.columnFull}>
-                    <Tabela dados={ticketsAndamento} titulo="⚙️ EM ANDAMENTO" variante="andamento" slaConfig={slaConfig} />
-                </div>
-                <div className={style.columnFull}>
-                    <Tabela dados={ticketsFinalizados} titulo={`✅ FINALIZADOS (${slaConfig.finishedDays} dia)`} variante="finalizado" slaConfig={slaConfig} />
-                </div>
-            </div>
-
-            {/* BARRA DE MÉTRICAS */}
-            <div className={style.metricsBar}>
-                <div className={style.metricItem}>
-                    <span className={style.metricLabel}>⏱️ Tempo Médio</span>
-                    <span className={style.metricValue}>{avgTimeFormatted}</span>
-                </div>
-                <div className={style.metricItem}>
-                    <span className={style.metricLabel}>📋 Tickets Abertos</span>
-                    <span className={style.metricValue} data-type="aberto">{ticketsAbertos.length}</span>
-                </div>
-                <div className={style.metricItem}>
-                    <span className={style.metricLabel}>⚙️ Em Andamento</span>
-                    <span className={style.metricValue} data-type="andamento">{ticketsAndamento.length}</span>
-                </div>
-                <div className={style.metricItem}>
-                    <span className={style.metricLabel}>✅ Finalizados</span>
-                    <span className={style.metricValue} data-type="finalizado">{ticketsFinalizados.length}</span>
-                </div>
-                <div className={style.metricItem}>
-                    <span className={style.metricLabel}>🕐 Atualização</span>
-                    <span className={style.metricValue} style={{ fontSize: '16px' }}>{lastRefresh.toLocaleTimeString('pt-BR')}</span>
-                </div>
+            {/* INFO DE ATUALIZAÇÃO */}
+            <div className={style.footerInfo}>
+                <span>🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}</span>
             </div>
         </main>
     );
