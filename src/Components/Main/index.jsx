@@ -108,19 +108,15 @@ export default function Main({ slaConfig }) {
 
     const processNextAlert = useCallback(() => {
         if (isProcessing.current) {
-            console.log('⚠️ Já processando um alerta, aguardando...');
             return;
         }
         
         if (alertaQueue.current.length === 0) {
-            console.log('📭 Fila de alertas vazia');
             return;
         }
         
         const nextAlert = alertaQueue.current.shift();
         isProcessing.current = true;
-        
-        console.log('🔔 Processando alerta:', nextAlert.displayMessage);
         
         setAlerta(nextAlert.displayMessage);
         
@@ -135,15 +131,13 @@ export default function Main({ slaConfig }) {
             currentUtterance.current = utterance;
             
             utterance.onend = () => {
-                console.log('✅ Fala finalizada, removendo alerta visual');
                 setAlerta(null);
                 isProcessing.current = false;
                 currentUtterance.current = null;
                 setTimeout(() => processNextAlert(), 500);
             };
             
-            utterance.onerror = (e) => {
-                console.error('❌ Erro na voz:', e);
+            utterance.onerror = () => {
                 setAlerta(null);
                 isProcessing.current = false;
                 currentUtterance.current = null;
@@ -205,8 +199,6 @@ export default function Main({ slaConfig }) {
                 !novosTicketsRef.current.has(t.id) &&
                 isTicketFromToday(t.created_at)
             );
-            
-            console.log('📢 Novos tickets de HOJE encontrados:', novosTickets.length);
             
             for (const ticket of novosTickets) {
                 novosTicketsRef.current.add(ticket.id);
@@ -283,40 +275,6 @@ export default function Main({ slaConfig }) {
     }, [ticketsAbertos, slaConfig, processNextAlert]);
 
     // ==================== CÁLCULO DE MÉTRICAS DOS ATENDENTES ====================
-    const calcularMetricasAtendentes = useMemo(() => {
-        const diasAtras = new Date();
-        diasAtras.setDate(diasAtras.getDate() - slaConfig.finishedDays);
-        
-        const ticketsAndamentoAtendentes = ticketsAndamento.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
-        const ticketsFinalizadosAtendentes = ticketsFinalizados.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
-        
-        const atendentesMap = new Map();
-        
-        ticketsAndamentoAtendentes.forEach(ticket => {
-            const atendente = ticket.exibir_usuarios;
-            if (!atendentesMap.has(atendente)) {
-                atendentesMap.set(atendente, { em_andamento: 0, finalizados: 0, total: 0 });
-            }
-            atendentesMap.get(atendente).em_andamento++;
-            atendentesMap.get(atendente).total++;
-        });
-        
-        ticketsFinalizadosAtendentes.forEach(ticket => {
-            const atendente = ticket.exibir_usuarios;
-            if (!atendentesMap.has(atendente)) {
-                atendentesMap.set(atendente, { em_andamento: 0, finalizados: 0, total: 0 });
-            }
-            atendentesMap.get(atendente).finalizados++;
-            atendentesMap.get(atendente).total++;
-        });
-        
-        return Array.from(atendentesMap.entries())
-            .map(([nome, dados]) => ({ nome, ...dados }))
-            .sort((a, b) => b.total - a.total);
-    }, [ticketsAndamento, ticketsFinalizados, slaConfig.finishedDays]);
-
-    // Dados para exibir (com fallback para teste)
-        // ==================== CÁLCULO DE MÉTRICAS DOS ATENDENTES ====================
     const dadosParaExibir = useMemo(() => {
         const ticketsAndamentoAtendentes = ticketsAndamento.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
         const ticketsFinalizadosAtendentes = ticketsFinalizados.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
@@ -356,8 +314,6 @@ export default function Main({ slaConfig }) {
                         <h2 className={style.audioTitle}>Ativar Alertas de Voz</h2>
                         <p className={style.audioText}>
                             Para receber alertas sonoros, clique no botão abaixo.
-                            <br /><br />
-                            <strong style={{ color: '#facc15' }}>⚠️ Use o OK do controle</strong>
                         </p>
                         <button className={style.audioButton} onClick={ativarAlertas}>
                             🔊 ATIVAR ALERTAS
@@ -381,27 +337,12 @@ export default function Main({ slaConfig }) {
                                 currentUtterance.current = null;
                                 setTimeout(() => processNextAlert(), 500);
                             }}
-                            style={{
-                                position: 'absolute',
-                                top: '12px',
-                                right: '12px',
-                                background: 'rgba(0,0,0,0.6)',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                color: 'white',
-                                fontSize: '18px',
-                                cursor: 'pointer',
-                                borderRadius: '50%',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
+                            className={style.closeAlertBtn}
                         >
                             ✕
                         </button>
                         <h1 className={style.tituloAlerta}>
-                            {alerta.includes('SLA') ? '⚠️ ALERTA DE SLA ⚠️' : '📢 NOVO TICKET!'}
+                            {alerta.includes('SLA') ? '⚠️ ALERTA DE SLA' : '📢 NOVO TICKET!'}
                         </h1>
                         <p className={style.mensagemAlerta}>{alerta}</p>
                     </div>
@@ -456,7 +397,7 @@ export default function Main({ slaConfig }) {
 
             {/* INFO DE ATUALIZAÇÃO */}
             <div className={style.footerInfo}>
-                <span>🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}</span>
+                🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}
             </div>
         </main>
     );
