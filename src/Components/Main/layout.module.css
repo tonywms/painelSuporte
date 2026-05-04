@@ -1,110 +1,284 @@
 .layout {
     flex: 1;
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 12px 20px 20px 20px;
+    min-height: 100vh;
+    background: #0f172a;
+    padding: 20px;
     overflow-y: auto;
 }
 
-/* TICKETS ABERTOS - COLUNA PRINCIPAL (ocupa mais espaço) */
-.mainSection {
-    flex: 2;
-    min-height: 400px;
+/* Scrollbar */
+.layout::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* Seção inferior com 2 colunas */
-.bottomSection {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    min-height: 300px;
+.layout::-webkit-scrollbar-track {
+    background: #1e293b;
 }
 
-/* Cards individuais */
-.columnFull {
+.layout::-webkit-scrollbar-thumb {
+    background: #38bdf8;
+}
+
+/* Hero Section */
+.heroSection {
+    margin-bottom: 24px;
+}
+
+.heroCard {
+    background: #1e293b;
+    border-radius: 20px;
+    padding: 24px 32px;
+    color: white;
+    border: 1px solid #38bdf8;
+}
+
+.heroTitle {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: white;
+}
+
+.heroSub {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+.statsGrid {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.statCard {
     display: flex;
     flex-direction: column;
-    min-width: 0;
 }
 
-/* Métricas em linha única */
-.metricsBar {
+.statValue {
+    font-size: 28px;
+    font-weight: 800;
+    color: #38bdf8;
+}
+
+.statLabel {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* Cards Atendentes */
+.teamSection {
+    background: #0f172a;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #1e293b;
+}
+
+.sectionHeader {
     display: flex;
     justify-content: space-between;
-    gap: 16px;
-    padding: 14px 20px;
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 16px;
-    border: 1px solid rgba(56, 189, 248, 0.1);
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #1e293b;
 }
 
-.metricItem {
+.sectionTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.sectionBadge {
+    background: #1e293b;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.teamGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.teamCard {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
     gap: 12px;
-    flex: 1;
+    border: 1px solid #334155;
 }
 
-.metricLabel {
-    font-size: 13px;
+.teamAvatar {
+    width: 44px;
+    height: 44px;
+    background: #38bdf8;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.teamName {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 6px;
+}
+
+.teamStats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.teamStat {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.statEmAndamento {
+    background: #a855f7;
+    color: white;
+}
+
+.statFinalizado {
+    background: #22c55e;
+    color: white;
+}
+
+.statTotal {
+    background: #38bdf8;
+    color: white;
+}
+
+/* Tickets Section */
+.ticketsSection {
+    background: #0f172a;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #1e293b;
+    margin-bottom: 20px;
+}
+
+.ticketsHeader {
+    background: #1e293b;
+    padding: 16px 20px;
+    border-bottom: 2px solid #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ticketsTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ticketsIcon {
+    font-size: 24px;
+}
+
+.ticketsTitle h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.ticketsTitle p {
+    font-size: 11px;
     color: #94a3b8;
-    font-weight: 500;
+    margin-top: 2px;
 }
 
-.metricValue {
-    font-size: 28px;
-    font-weight: 800;
+.ticketsBadge {
+    background: #38bdf8;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
 }
 
-.metricValue[data-type="aberto"] { color: #facc15; }
-.metricValue[data-type="andamento"] { color: #a855f7; }
-.metricValue[data-type="finalizado"] { color: #22c55e; }
+/* Footer */
+.footerInfo {
+    text-align: center;
+    padding: 12px;
+    color: #64748b;
+    font-size: 11px;
+    background: #0f172a;
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+}
 
 /* Alertas */
 .overlayAlerta {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.9);
-    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.9);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 10000;
-    animation: fadeIn .25s ease;
 }
 
 .boxAlerta {
-    background: linear-gradient(135deg, #0f172a, #020617);
-    border: 3px solid #ef4444;
-    padding: 32px 56px;
-    border-radius: 28px;
+    background: #1e293b;
+    border: 2px solid #ef4444;
+    padding: 24px 40px;
+    border-radius: 24px;
     text-align: center;
-    box-shadow: 0 0 70px rgba(239,68,68,.4);
-    max-width: 550px;
+    max-width: 500px;
+    position: relative;
+}
+
+.closeAlertBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #334155;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: white;
 }
 
 .tituloAlerta {
     color: #ef4444;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 800;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .mensagemAlerta {
     color: #e2e8f0;
-    font-size: 22px;
-    font-weight: 600;
-    line-height: 1.4;
+    font-size: 16px;
 }
 
-/* Modal de ativação de áudio */
+/* Modal Áudio */
 .audioModal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.92);
-    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.9);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -112,429 +286,198 @@
 }
 
 .audioCard {
-    background: linear-gradient(135deg, #0f172a, #020617);
+    background: #1e293b;
     border: 2px solid #38bdf8;
-    border-radius: 32px;
-    padding: 40px 56px;
+    border-radius: 24px;
+    padding: 32px 40px;
     text-align: center;
-    max-width: 480px;
+    max-width: 400px;
 }
 
 .audioIcon {
-    font-size: 56px;
-    margin-bottom: 20px;
+    font-size: 48px;
+    margin-bottom: 16px;
 }
 
 .audioTitle {
     color: #38bdf8;
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 800;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .audioText {
     color: #94a3b8;
-    font-size: 16px;
-    line-height: 1.5;
-    margin-bottom: 28px;
+    font-size: 14px;
+    margin-bottom: 20px;
 }
 
 .audioButton {
-    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    background: #38bdf8;
     border: none;
-    padding: 14px 36px;
-    border-radius: 20px;
-    color: white;
-    font-size: 18px;
+    padding: 12px 28px;
+    border-radius: 30px;
+    color: #0f172a;
+    font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     width: 100%;
 }
 
 .audioNote {
-    margin-top: 20px;
-    font-size: 12px;
+    margin-top: 16px;
+    font-size: 11px;
     color: #64748b;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Responsivo */
-@media (max-width: 900px) {
-    .bottomSection {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
-    .metricsBar {
-        flex-wrap: wrap;
-    }
-    
-    .metricItem {
-        min-width: 120px;
-    }
-}
-
-/* Aumentar tamanho da seção principal */
+/* Destaque Tickets Abertos */
 .mainSection {
-    flex: 2.5;
-    min-height: 450px;
-}
-
-/* Ajustes para melhor visualização */
-.metricValue {
-    font-size: 26px;
-    font-weight: 800;
-}
-
-.metricLabel {
-    font-size: 14px;
-}
-
-/* Ajuste da barra de métricas */
-.metricsBar {
-    padding: 16px 24px;
-    gap: 20px;
-}
-
-/* Alertas - Garantir que o overlay pode ser removido */
-.overlayAlerta {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    backdrop-filter: blur(12px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-    animation: fadeIn .25s ease;
-    pointer-events: none; /* Permite clicar através do overlay se necessário */
-}
-
-/* Classe para esconder o alerta - será aplicada via JavaScript se necessário */
-.overlayAlertaHidden {
-    display: none !important;
-}
-
-.boxAlerta {
-    background: linear-gradient(135deg, #0f172a, #020617);
-    border: 3px solid #ef4444;
-    padding: 32px 56px;
-    border-radius: 28px;
-    text-align: center;
-    box-shadow: 0 0 70px rgba(239, 68, 68, 0.4);
-    max-width: 550px;
-    pointer-events: auto;
-}
-
-/* ==================== CARDS DOS ATENDENTES ==================== */
-.atendentesGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
-.atendenteCard {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.9));
-    border-radius: 20px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    border: 1px solid rgba(56, 189, 248, 0.15);
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-}
-
-.atendenteCard:hover {
-    transform: translateY(-2px);
-    border-color: rgba(56, 189, 248, 0.4);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
-
-.atendenteAvatar {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-}
-
-.atendenteInfo {
     flex: 1;
+    min-height: 400px;
 }
 
-.atendenteNome {
-    font-size: 18px;
-    font-weight: 700;
-    color: #e2e8f0;
-    margin-bottom: 8px;
-}
-
-.atendenteStats {
+.highlightHeader {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.statBadge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
+    background: #1e293b;
+    border: 1px solid #38bdf8;
+    border-radius: 16px;
+    padding: 12px 20px;
+    margin-bottom: 16px;
 }
 
-.statBadge.andamento {
-    background: rgba(168, 85, 247, 0.15);
-    color: #a855f7;
-    border: 1px solid rgba(168, 85, 247, 0.3);
+.highlightIcon {
+    font-size: 28px;
 }
 
-.statBadge.finalizado {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.statBadge.total {
-    background: rgba(56, 189, 248, 0.15);
+.highlightTitle {
+    font-size: 18px;
+    font-weight: 800;
     color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
-/* Responsivo para telas pequenas */
-@media (max-width: 768px) {
-    .atendentesGrid {
-        grid-template-columns: 1fr;
-    }
-    
-    .atendenteCard {
-        padding: 12px 16px;
-    }
-    
-    .atendenteAvatar {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-    
-    .atendenteNome {
-        font-size: 16px;
-    }
-    
-    .statBadge {
-        font-size: 10px;
-        padding: 3px 8px;
-    }
+.highlightSub {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
 }
 
-/* ==================== CARDS DOS ATENDENTES ==================== */
+.highlightBadge {
+    background: #38bdf8;
+    padding: 6px 16px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-left: auto;
+}
+
+/* Cards Atendentes Grid */
 .atendentesGrid {
-    margin-top: 20px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(2, 6, 23, 0.4));
+    background: #0f172a;
     border-radius: 20px;
-    padding: 20px;
-    border: 1px solid rgba(56, 189, 248, 0.1);
+    padding: 16px;
+    border: 1px solid #1e293b;
+    margin-bottom: 20px;
 }
 
 .atendentesHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1e293b;
     color: #38bdf8;
     font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 1px;
+    font-size: 13px;
 }
 
 .atendentesSub {
-    font-size: 11px;
+    font-size: 10px;
     color: #64748b;
-    font-weight: 400;
 }
 
 .atendentesCards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
 }
 
 .atendenteCard {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.8));
-    border-radius: 16px;
-    padding: 14px 18px;
+    background: #1e293b;
+    border-radius: 14px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    border: 1px solid rgba(56, 189, 248, 0.12);
-    transition: all 0.3s ease;
-}
-
-.atendenteCard:hover {
-    transform: translateY(-2px);
-    border-color: rgba(56, 189, 248, 0.35);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+    gap: 12px;
+    border: 1px solid #334155;
 }
 
 .atendenteAvatar {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    background: #38bdf8;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-}
-
-.atendenteInfo {
-    flex: 1;
+    color: #0f172a;
 }
 
 .atendenteNome {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
-    color: #e2e8f0;
+    color: white;
     margin-bottom: 6px;
 }
 
 .atendenteStats {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
 .statBadge {
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
     font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
 }
 
 .statBadge.andamento {
-    background: rgba(168, 85, 247, 0.15);
-    color: #a855f7;
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    background: #a855f7;
+    color: white;
 }
 
 .statBadge.finalizado {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: #22c55e;
+    color: white;
 }
 
 .statBadge.total {
-    background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: #38bdf8;
+    color: #0f172a;
 }
 
 /* Responsivo */
-@media (max-width: 768px) {
-    .atendentesCards {
+@media (max-width: 900px) {
+    .layout {
+        padding: 12px;
+    }
+    
+    .statsGrid {
+        gap: 20px;
+    }
+    
+    .teamGrid {
         grid-template-columns: 1fr;
     }
     
-    .atendenteCard {
-        padding: 12px 14px;
+    .atendentesCards {
+        grid-template-columns: 1fr;
     }
-    
-    .atendenteAvatar {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-    
-    .atendenteNome {
-        font-size: 14px;
-    }
-    
-    .statBadge {
-        font-size: 10px;
-        padding: 2px 8px;
-    }
-}
-
-/* ========== DESTAQUE PARA TICKETS ABERTOS ========== */
-.highlightHeader {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: linear-gradient(135deg, rgba(250, 204, 21, 0.15), rgba(250, 204, 21, 0.05));
-    border: 1px solid rgba(250, 204, 21, 0.3);
-    border-radius: 16px;
-    padding: 16px 24px;
-    margin-bottom: 16px;
-    backdrop-filter: blur(10px);
-}
-
-.highlightIcon {
-    font-size: 32px;
-    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.5));
-}
-
-.highlightTitle {
-    font-size: 20px;
-    font-weight: 800;
-    color: #facc15;
-    letter-spacing: 1px;
-}
-
-.highlightSub {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-top: 4px;
-}
-
-.highlightBadge {
-    background: linear-gradient(135deg, #facc15, #eab308);
-    padding: 8px 20px;
-    border-radius: 40px;
-    font-size: 18px;
-    font-weight: 800;
-    color: #000;
-    margin-left: auto;
-    box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
-}
-
-/* ========== DESTAQUE NA MÉTRICA DE TICKETS ABERTOS ========== */
-.metricValueHighlight {
-    font-size: 32px;
-    font-weight: 800;
-    background: linear-gradient(135deg, #facc15, #eab308);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
-}
-
-.metricValueHighlight[data-type="aberto"] {
-    background: linear-gradient(135deg, #facc15, #eab308);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
