@@ -1,13 +1,30 @@
-// No início do seu App.js, adicione:
+// App.js - Versão completa com modo debug
 import { useState, useEffect } from 'react';
 import './App.css';
 import Header from './Components/Header';
 import Main from './Components/Main';
 import ConfigPanel from './Components/ConfigPanel';
 import TvApp from './TvApp';
+import DebugConsole from './DebugConsole';
 import style from './style.module.css';
 
 function App() {
+  // ============================================
+  // VERIFICAÇÃO DE MODO DEBUG PRIMEIRO
+  // ============================================
+  const isDebugMode = typeof window !== 'undefined' && (
+    window.location.search.includes('debug=true') ||
+    localStorage.getItem('debugMode') === 'true'
+  );
+
+  // SE FOR MODO DEBUG, MOSTRA O CONSOLE
+  if (isDebugMode) {
+    return <DebugConsole />;
+  }
+
+  // ============================================
+  // DETECÇÃO DE TV SAMSUNG
+  // ============================================
   const [isTvBrowser, setIsTvBrowser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,20 +66,38 @@ function App() {
     };
   });
 
+  const handleSaveConfig = (newConfig) => {
+    setSlaConfig(newConfig);
+    localStorage.setItem('slaConfig', JSON.stringify(newConfig));
+    setConfigOpen(false);
+    
+    // Notificação de sucesso
+    const notification = document.createElement('div');
+    notification.textContent = '✅ Configurações salvas com sucesso!';
+    notification.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #3b82f6;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      z-index: 10002;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 2000);
+    
+    window.dispatchEvent(new Event('refreshData'));
+  };
+
   // Se for TV Samsung, carrega a versão simplificada
   if (isTvBrowser) {
     return <TvApp />;
   }
 
-  // Se for navegador normal, carrega o app completo
-  // ... resto do seu App.js original ...
-  
-  const handleSaveConfig = (newConfig) => {
-    setSlaConfig(newConfig);
-    localStorage.setItem('slaConfig', JSON.stringify(newConfig));
-    setConfigOpen(false);
-  };
-
+  // Tela de loading
   if (isLoading) {
     return (
       <div className={style.loadingOverlay}>
@@ -74,6 +109,7 @@ function App() {
     );
   }
 
+  // App normal
   return (
     <div className={style.appContainer}>
       <div className={style.particlesBg} />
