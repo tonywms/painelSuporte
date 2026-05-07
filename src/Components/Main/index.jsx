@@ -43,6 +43,7 @@ const isTicketFromToday = (createdAt) => {
 };
 
 // Função para calcular tempo útil (horário comercial)
+// Função para calcular tempo útil (horário comercial 8h-18h, Segunda a Sexta)
 const calcularMinutosUteis = (dataInicio) => {
     const inicio = new Date(dataInicio);
     const agora = new Date();
@@ -52,35 +53,33 @@ const calcularMinutosUteis = (dataInicio) => {
     let totalMinutos = 0;
     let current = new Date(inicio);
     
-    const inicioExpediente = 8;
-    const fimExpedienteSegQui = 18;
-    const fimExpedienteSex = 17;
+    const inicioExpediente = 8;  // 8:00
+    const fimExpediente = 18;     // 18:00
     
-    while (current < agora) {
-        const diaSemana = current.getDay();
+    // Arredonda para o minuto atual
+    current.setSeconds(0, 0);
+    const agoraArredondado = new Date(agora);
+    agoraArredondado.setSeconds(0, 0);
+    
+    while (current < agoraArredondado) {
+        const diaSemana = current.getDay(); // 0 = Domingo, 6 = Sábado
         const hora = current.getHours();
-        const minutos = current.getMinutes();
         
+        // Segunda a Sexta (1 a 5)
         if (diaSemana >= 1 && diaSemana <= 5) {
-            const fimExpediente = (diaSemana === 5) ? fimExpedienteSex : fimExpedienteSegQui;
-            
+            // Dentro do horário comercial
             if (hora >= inicioExpediente && hora < fimExpediente) {
-                const minutosNoDia = (hora * 60 + minutos);
-                const fimExpedienteMinutos = fimExpediente * 60;
-                
-                if (minutosNoDia < fimExpedienteMinutos) {
-                    const minutosRestantesNoDia = fimExpedienteMinutos - minutosNoDia;
-                    const minutosAteAgora = Math.min(minutosRestantesNoDia, (agora - current) / (1000 * 60));
-                    totalMinutos += minutosAteAgora;
-                }
+                totalMinutos++;
             }
         }
         
-        current = new Date(current.getTime() + 60000);
+        // Avança 1 minuto
+        current.setMinutes(current.getMinutes() + 1);
     }
     
     return totalMinutos;
 };
+
 
 export default function Main({ slaConfig }) {
     const [tasks, setTasks] = useState([]);
@@ -175,14 +174,15 @@ export default function Main({ slaConfig }) {
                     task.minutesOpen = minutesDiff;
                     task.timeOpenFormatted = formatMinutes(minutesDiff);
                     
-                    if (task.board_stage_name === "A fazer" || task.board_stage_name === "Em aprovação") {
-                        if (minutesDiff <= slaConfig.supportTakeoverTime) {
+                        if (task.board_stage_name === "A fazer" || task.board_stage_name === "Em aprovação") {
+                        // SLA: 15min para assumir, 45min para resolver (horário comercial)
+                        if (minutesDiff <= 15) {
                             task.slaStatus = 'normal';
                             task.slaMessage = `🟢 Normal (${formatSlaTime(minutesDiff)})`;
-                        } else if (minutesDiff <= slaConfig.supportWarningTime) {
+                        } else if (minutesDiff <= 30) {
                             task.slaStatus = 'warning';
                             task.slaMessage = `🟡 Atenção (${formatSlaTime(minutesDiff)})`;
-                        } else if (minutesDiff <= slaConfig.supportResolutionTime) {
+                        } else if (minutesDiff <= 45) {
                             task.slaStatus = 'critical';
                             task.slaMessage = `🔴 URGENTE (${formatSlaTime(minutesDiff)})`;
                         } else {

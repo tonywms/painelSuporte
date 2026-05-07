@@ -1,4 +1,57 @@
+// src/TvApp.js
 import { useState, useEffect } from 'react';
+
+// ============================================
+// FUNÇÃO DE CÁLCULO DE HORÁRIO COMERCIAL
+// Conta apenas minutos entre 8h-18h, Segunda a Sexta
+// ============================================
+const calcularMinutosUteis = (dataInicio) => {
+    const inicio = new Date(dataInicio);
+    const agora = new Date();
+    
+    if (inicio >= agora) return 0;
+    
+    let totalMinutos = 0;
+    let current = new Date(inicio);
+    
+    const inicioExpediente = 8;  // 8:00
+    const fimExpediente = 18;     // 18:00
+    
+    // Arredonda para o minuto atual
+    current.setSeconds(0, 0);
+    const agoraArredondado = new Date(agora);
+    agoraArredondado.setSeconds(0, 0);
+    
+    while (current < agoraArredondado) {
+        const diaSemana = current.getDay(); // 0 = Domingo, 6 = Sábado
+        const hora = current.getHours();
+        
+        // Segunda a Sexta (1 a 5)
+        if (diaSemana >= 1 && diaSemana <= 5) {
+            // Dentro do horário comercial
+            if (hora >= inicioExpediente && hora < fimExpediente) {
+                totalMinutos++;
+            }
+        }
+        
+        // Avança 1 minuto
+        current.setMinutes(current.getMinutes() + 1);
+    }
+    
+    return totalMinutos;
+};
+
+// Função para formatar minutos em horas/minutos
+const formatarTempo = (minutes) => {
+    if (!minutes && minutes !== 0) return '0m';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+        if (mins > 0) return `${hours}h ${mins}m`;
+        return `${hours}h`;
+    }
+    return `${mins}m`;
+};
 
 function TvApp() {
   const [tasks, setTasks] = useState([]);
@@ -25,18 +78,27 @@ function TvApp() {
           task.exibir_usuarios = task.user_name ? task.user_name.split(' ')[0] : 'Pendente';
         }
         
+        // ============================================
+        // CÁLCULO DE TEMPO COM HORÁRIO COMERCIAL
+        // ============================================
         if (task.created_at) {
-          const created = new Date(task.created_at);
-          const now = new Date();
-          const minutesDiff = Math.floor((now - created) / 60000);
+          const minutesDiff = calcularMinutosUteis(task.created_at);
           task.minutesOpen = minutesDiff;
+          task.timeOpenFormatted = formatarTempo(minutesDiff);
           
-          const hours = Math.floor(minutesDiff / 60);
-          const mins = minutesDiff % 60;
-          if (hours > 0) {
-            task.timeOpenFormatted = `${hours}h ${mins}m`;
+          // Definir status do SLA baseado no tempo comercial
+          if (minutesDiff <= 15) {
+            task.slaStatus = 'normal';
+            task.slaMessage = `🟢 Normal`;
+          } else if (minutesDiff <= 30) {
+            task.slaStatus = 'warning';
+            task.slaMessage = `🟡 Atenção`;
+          } else if (minutesDiff <= 45) {
+            task.slaStatus = 'critical';
+            task.slaMessage = `🔴 URGENTE`;
           } else {
-            task.timeOpenFormatted = `${mins}m`;
+            task.slaStatus = 'critical';
+            task.slaMessage = `🔴 ATRASADO`;
           }
         }
         return task;
@@ -52,7 +114,7 @@ function TvApp() {
   };
 
   const ticketsAbertos = tasks.filter(t => 
-    t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação"
+    (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação")
   );
 
   const ticketsAndamento = tasks.filter(t => t.board_stage_name === "Fazendo");
@@ -100,9 +162,9 @@ function TvApp() {
       {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>WMSEXPERT</h1>
-        <p style={styles.subtitle}>Painel de Suporte</p>
+        <p style={styles.subtitle}>Painel de Suporte • Horário Comercial 8h-18h</p>
         <div style={styles.stats}>
-          <div style={styles.stat}><span style={styles.statValue}>{ticketsAbertos.length}</span><span>Críticos</span></div>
+          <div style={styles.stat}><span style={styles.statValue}>{ticketsAbertos.length}</span><span>Tickets em SLA</span></div>
           <div style={styles.stat}><span style={styles.statValue}>{ticketsAndamento.length}</span><span>Em andamento</span></div>
           <div style={styles.stat}><span style={styles.statValue}>{ticketsFinalizados.length}</span><span>Finalizados</span></div>
         </div>
@@ -138,7 +200,7 @@ function TvApp() {
           <span style={styles.slaIcon}>🎯</span>
           <div>
             <h2 style={styles.slaTitle}>TICKETS EM SLA</h2>
-            <p style={styles.slaSub}>Prioridade máxima - Assuma agora!</p>
+            <p style={styles.slaSub}>Prioridade máxima - Assuma em até 15min!</p>
           </div>
           <div style={styles.slaBadge}>{ticketsAbertos.length} ativos</div>
         </div>
@@ -148,8 +210,8 @@ function TvApp() {
             <div style={styles.gridHeader}>
               <span>ID</span>
               <span>Cliente</span>
-              <span>Aberto há</span>
-              <span>Status</span>
+              <span>Tempo Aberto</span>
+              <span>Status SLA</span>
               <span>Responsável</span>
             </div>
           </div>
@@ -163,8 +225,8 @@ function TvApp() {
                   <div style={styles.rowCliente}>{task.client_name || 'N/A'}</div>
                   <div style={styles.rowTempo}>{task.timeOpenFormatted || '0m'}</div>
                   <div>
-                    <span style={task.minutesOpen > 15 ? styles.statusCritical : styles.statusNormal}>
-                      {task.minutesOpen > 15 ? '🔴 URGENTE' : '🟢 Normal'}
+                    <span style={task.slaStatus === 'critical' ? styles.statusCritical : (task.slaStatus === 'warning' ? styles.statusWarning : styles.statusNormal)}>
+                      {task.slaMessage}
                     </span>
                   </div>
                   <div style={styles.rowResp}>{task.exibir_usuarios || 'Pendente'}</div>
@@ -177,7 +239,7 @@ function TvApp() {
 
       {/* Footer */}
       <div style={styles.footer}>
-        🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}
+        🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')} | ⏰ Contabiliza apenas horário comercial (8h-18h, Seg-Sex)
       </div>
     </div>
   );
@@ -213,7 +275,7 @@ const styles = {
     margin: '0 0 4px 0'
   },
   subtitle: {
-    fontSize: '12px',
+    fontSize: '11px',
     color: '#94a3b8',
     marginBottom: '16px'
   },
@@ -382,6 +444,14 @@ const styles = {
   },
   statusCritical: {
     background: '#dc2626',
+    padding: '4px 10px',
+    borderRadius: '16px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    display: 'inline-block'
+  },
+  statusWarning: {
+    background: '#d97706',
     padding: '4px 10px',
     borderRadius: '16px',
     fontSize: '11px',
