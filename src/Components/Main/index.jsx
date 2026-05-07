@@ -274,6 +274,8 @@ export default function Main({ slaConfig }) {
         }
     }, [ticketsAbertos, slaConfig, processNextAlert]);
 
+    
+
     // ==================== CÁLCULO DE MÉTRICAS DOS ATENDENTES ====================
     const dadosParaExibir = useMemo(() => {
         const ticketsAndamentoAtendentes = ticketsAndamento.filter(t => t.exibir_usuarios && t.exibir_usuarios !== 'Pendente');
@@ -305,25 +307,50 @@ export default function Main({ slaConfig }) {
     }, [ticketsAndamento, ticketsFinalizados]);
 
     return (
-        <main className={style.layout}>
-            {/* Modal de áudio */}
+        <main className={`${style.layout} ${style.cyberLayout}`}>
+            {/* HERO CYBERPUNK */}
+            <section className={style.heroSection}>
+                <div className={style.heroCard}>
+                    <div className={style.heroContent}>
+                        
+                        <h1 className={style.heroTitle}>Painel de Suporte SLA</h1>
+                        <p className={style.heroSubtitle}>Monitoramento em Tempo Real • Alertas Inteligentes • SLAs Automáticos</p>
+                        <div className={style.statsGrid}>
+                            <div className={style.statCard}>
+                                <span className={style.statValue}>{ticketsAbertos.length}</span>
+                                <span className={style.statLabel}>Tickets Críticos</span>
+                            </div>
+                            <div className={style.statCard}>
+                                <span className={style.statValue}>{ticketsAndamento.length}</span>
+                                <span className={style.statLabel}>Em Andamento</span>
+                            </div>
+                            <div className={style.statCard}>
+                                <span className={style.statValue}>{ticketsFinalizados.length}</span>
+                                <span className={style.statLabel}>Finalizados Hoje</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Modal de áudio FUTURISTA */}
             {!audioPermissionGranted && (
                 <div className={style.audioModal}>
                     <div className={style.audioCard}>
                         <div className={style.audioIcon}>🔊</div>
-                        <h2 className={style.audioTitle}>Ativar Alertas de Voz</h2>
+                        <h2 className={style.audioTitle}>Ativar Sistema de Voz</h2>
                         <p className={style.audioText}>
-                            Para receber alertas sonoros, clique no botão abaixo.
+                            Ative os alertas por voz para notificações em tempo real
                         </p>
                         <button className={style.audioButton} onClick={ativarAlertas}>
-                            🔊 ATIVAR ALERTAS
+                            ⚡ ATIVAR VOZ IA
                         </button>
-                        <p className={style.audioNote}>Alertas visuais funcionam mesmo sem voz</p>
+                        <p className={style.audioNote}>Alertas visuais sempre funcionam</p>
                     </div>
                 </div>
             )}
 
-            {/* Alerta visual */}
+            {/* Alerta visual NEON */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
@@ -342,19 +369,19 @@ export default function Main({ slaConfig }) {
                             ✕
                         </button>
                         <h1 className={style.tituloAlerta}>
-                            {alerta.includes('SLA') ? '⚠️ ALERTA DE SLA' : '📢 NOVO TICKET!'}
+                            {alerta.includes('SLA') ? '🚨 ALERTA SLA CRÍTICO' : '🆕 NOVO TICKET'}
                         </h1>
                         <p className={style.mensagemAlerta}>{alerta}</p>
                     </div>
                 </div>
             )}
 
-            {/* CARDS DE DESEMPENHO DOS ATENDENTES */}
+            {/* CARDS ATENDENTES CYBERPUNK */}
             {dadosParaExibir.length > 0 && (
-                <div className={style.atendentesGrid}>
-                    <div className={style.atendentesHeader}>
-                        <span>👥 DESEMPENHO POR ATENDENTE</span>
-                        <span className={style.atendentesSub}>Últimos {slaConfig.finishedDays} dia(s)</span>
+                <section className={style.teamSection}>
+                    <div className={style.sectionHeader}>
+                        <h3 className={style.sectionTitle}>👥 Time Ativo</h3>
+                        <span className={style.sectionBadge}>Real-time</span>
                     </div>
                     <div className={style.atendentesCards}>
                         {dadosParaExibir.map((atendente) => (
@@ -379,25 +406,27 @@ export default function Main({ slaConfig }) {
                             </div>
                         ))}
                     </div>
-                </div>
+                </section>
             )}
 
-            {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS (EM DESTAQUE) */}
-            <div className={style.mainSection}>
-                <div className={style.highlightHeader}>
-                    <div className={style.highlightIcon}>🎯</div>
-                    <div>
-                        <div className={style.highlightTitle}>TICKETS ABERTOS</div>
-                        <div className={style.highlightSub}>Prioridade máxima de atendimento</div>
+                {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS */}
+                <section className={style.mainSection}>
+                    <div className={style.highlightHeader}>
+                        <div className={style.highlightIcon}>🎯</div>
+                        <div>
+                            <div className={style.highlightTitle}>TICKETS EM SLA</div>
+                            <div className={style.highlightSub}>Prioridade máxima - Assuma agora!</div>
+                        </div>
+                        <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
                     </div>
-                    <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
-                </div>
-                <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
-            </div>
+                    <div className={style.tableContainer}>
+                        <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
+                    </div>
+                </section>
 
-            {/* INFO DE ATUALIZAÇÃO */}
+            {/* INFO DE ATUALIZAÇÃO NEON */}
             <div className={style.footerInfo}>
-                🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}
+                🕐 Última sincronização: <span className={style.refreshTime}>{lastRefresh.toLocaleTimeString('pt-BR')}</span>
             </div>
         </main>
     );

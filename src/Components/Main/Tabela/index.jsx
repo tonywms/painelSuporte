@@ -4,14 +4,12 @@ export default function Tabela({ dados, titulo, variante, slaConfig }) {
     const getStatusClass = (task) => {
         if (variante !== 'aberto') return style.statusDefault;
         
-        switch(task.slaStatus) {
-            case 'critical': return style.statusCritical;
-            case 'warning': return style.statusWarning;
-            case 'normal': return style.statusNormal;
-            case 'dev': return style.statusDev;
-            case 'devCritical': return style.statusCritical;
-            default: return style.statusNormal;
-        }
+        // Prioridade: devCritical > critical > dev > warning > normal
+        if (task.slaStatus === 'devCritical') return style.statusCritical;
+        if (task.slaStatus === 'critical') return style.statusCritical;
+        if (task.slaStatus === 'dev') return style.statusDev;
+        if (task.slaStatus === 'warning') return style.statusWarning;
+        return style.statusNormal;
     };
 
     const getStatusText = (task) => {
@@ -19,7 +17,10 @@ export default function Tabela({ dados, titulo, variante, slaConfig }) {
             if (variante === 'andamento') return task.board_stage_name || 'Fazendo';
             return task.board_stage_name || 'Em andamento';
         }
-        return task.slaMessage || `🟢 Normal (${task.minutesOpen || 0}m)`;
+        
+        // Mostra o tempo de forma mais amigável
+        const timeDisplay = task.slaMessage || `🟢 Normal (${task.timeOpenFormatted || '0m'})`;
+        return timeDisplay;
     };
 
     const getHeaderGradient = () => {
@@ -43,10 +44,7 @@ export default function Tabela({ dados, titulo, variante, slaConfig }) {
     return (
         <div className={style.containerTable}>
             <div className={style.tableHeader} style={{ background: getHeaderGradient() }}>
-                <h3>
-                    {titulo}
-                    <span className={style.badge}>{dados?.length || 0}</span>
-                </h3>
+
             </div>
 
             <div className={getGridClass()}>
