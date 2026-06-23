@@ -1,4 +1,4 @@
-// App.js - Versão completa com modo debug
+// App.js - Versão corrigida (Hooks sempre chamados)
 import { useState, useEffect } from 'react';
 import './App.css';
 import Header from './Components/Header';
@@ -10,38 +10,19 @@ import style from './style.module.css';
 
 function App() {
   // ============================================
-  // VERIFICAÇÃO DE MODO DEBUG PRIMEIRO
+  // TODOS OS HOOKS DEVEM SER CHAMADOS PRIMEIRO
+  // NÃO CONDICIONALMENTE!
   // ============================================
+  
+  // Detecta modo debug (sem hook, é só uma variável)
   const isDebugMode = typeof window !== 'undefined' && (
     window.location.search.includes('debug=true') ||
     localStorage.getItem('debugMode') === 'true'
   );
 
-  // SE FOR MODO DEBUG, MOSTRA O CONSOLE
-  if (isDebugMode) {
-    return <DebugConsole />;
-  }
-
-  // ============================================
-  // DETECÇÃO DE TV SAMSUNG
-  // ============================================
+  // Hooks (sempre chamados, na mesma ordem)
   const [isTvBrowser, setIsTvBrowser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Detecta navegador da TV Samsung
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isSamsungTv = userAgent.includes('tizen') || 
-                         userAgent.includes('samsungbrowser') ||
-                         userAgent.includes('smarttv');
-    
-    // Detecta também por falta de suporte a backdrop-filter
-    const supportsBackdropFilter = CSS.supports('backdrop-filter', 'blur(10px)');
-    
-    setIsTvBrowser(isSamsungTv || !supportsBackdropFilter);
-    setIsLoading(false);
-  }, []);
-
   const [configOpen, setConfigOpen] = useState(false);
   const [slaConfig, setSlaConfig] = useState(() => {
     const saved = localStorage.getItem('slaConfig');
@@ -65,6 +46,24 @@ function App() {
       alertRepeat: 2
     };
   });
+
+  // useEffect SEMPRE chamado
+  useEffect(() => {
+    // Detecta navegador da TV Samsung
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isSamsungTv = userAgent.includes('tizen') || 
+                         userAgent.includes('samsungbrowser') ||
+                         userAgent.includes('smarttv');
+    
+    console.log('USER AGENT:', userAgent);
+    console.log('IS SAMSUNG TV:', isSamsungTv);
+    
+    // Detecta também por falta de suporte a backdrop-filter
+    const supportsBackdropFilter = CSS.supports('backdrop-filter', 'blur(10px)');
+    
+    setIsTvBrowser(isSamsungTv || !supportsBackdropFilter);
+    setIsLoading(false);
+  }, []);
 
   const handleSaveConfig = (newConfig) => {
     setSlaConfig(newConfig);
@@ -92,24 +91,48 @@ function App() {
     window.dispatchEvent(new Event('refreshData'));
   };
 
-  // Se for TV Samsung, carrega a versão simplificada
+  // ============================================
+  // RENDERIZAÇÃO CONDICIONAL DEPOIS DOS HOOKS
+  // ============================================
+  
+  // 1. Prioridade: Modo Debug
+  if (isDebugMode) {
+    return <DebugConsole />;
+  }
+
+  // 2. Segunda prioridade: TV Samsung
   if (isTvBrowser) {
     return <TvApp />;
   }
 
-  // Tela de loading
+  // 3. Tela de loading
   if (isLoading) {
     return (
-      <div className={style.loadingOverlay}>
-        <div className={style.loadingContent}>
-          <div className={style.loadingSpinner}></div>
-          <div className={style.loadingText}>Iniciando Sistema...</div>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#0f172a',
+        color: 'white'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #3b82f6',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <div>Iniciando Sistema...</div>
         </div>
       </div>
     );
   }
 
-  // App normal
+  // 4. App normal
   return (
     <div className={style.appContainer}>
       <div className={style.particlesBg} />
@@ -128,5 +151,15 @@ function App() {
     </div>
   );
 }
+
+// Adicione esta keyframe global se não existir
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
 
 export default App;

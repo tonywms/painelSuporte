@@ -42,7 +42,6 @@ const isTicketFromToday = (createdAt) => {
            ticketDate.getFullYear() === today.getFullYear();
 };
 
-// Função para calcular tempo útil (horário comercial)
 // Função para calcular tempo útil (horário comercial 8h-18h, Segunda a Sexta)
 const calcularMinutosUteis = (dataInicio) => {
     const inicio = new Date(dataInicio);
@@ -174,7 +173,7 @@ export default function Main({ slaConfig }) {
                     task.minutesOpen = minutesDiff;
                     task.timeOpenFormatted = formatMinutes(minutesDiff);
                     
-                        if (task.board_stage_name === "A fazer" || task.board_stage_name === "Em aprovação") {
+                    if (task.board_stage_name === "A fazer" || task.board_stage_name === "Em aprovação") {
                         // SLA: 15min para assumir, 45min para resolver (horário comercial)
                         if (minutesDiff <= 15) {
                             task.slaStatus = 'normal';
@@ -230,30 +229,40 @@ export default function Main({ slaConfig }) {
         if (saved === 'true') setAudioPermissionGranted(true);
     }, []);
 
-    // FILTROS
+    // ============================================
+    // CORREÇÃO 1: REMOVIDO FILTRO DE DIAS DOS TICKETS EM SLA
+    // Agora mostra TODOS os tickets em "A fazer/Em aprovação"
+    // ============================================
     const ticketsAbertos = useMemo(() => {
-        const diasAtras = new Date();
-        diasAtras.setDate(diasAtras.getDate() - slaConfig.openTicketsDays);
+        // SEM filtro de dias - mostra todos os tickets em SLA
         return tasks.filter(t => 
-            (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
-            new Date(t.created_at) >= diasAtras
+            (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação")
         );
-    }, [tasks, slaConfig.openTicketsDays]);
+    }, [tasks]);
 
     const ticketsAndamento = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "Fazendo"), [tasks]);
 
+    // ============================================
+    // CORREÇÃO 2: FINALIZADOS HOJE - Conta apenas tickets com close_date igual a hoje
+    // ============================================
     const ticketsFinalizados = useMemo(() => {
-        const diasAtras = new Date();
-        diasAtras.setDate(diasAtras.getDate() - slaConfig.finishedDays);
+        const hoje = new Date();
+        const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
+        const fimHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
+        
         return tasks.filter(t => {
             const isEntregue = String(t.board_stage_name).toLowerCase() === "entregues" || t.is_closed === true;
             if (!isEntregue) return false;
-            if (t.close_date) return new Date(t.close_date) >= diasAtras;
-            if (t.updated_at) return new Date(t.updated_at) >= diasAtras;
+            
+            // Usar close_date para saber quando foi finalizado
+            const closeDate = t.close_date ? new Date(t.close_date) : null;
+            if (closeDate) {
+                return closeDate >= inicioHoje && closeDate <= fimHoje;
+            }
             return false;
         });
-    }, [tasks, slaConfig.finishedDays]);
+    }, [tasks]);
 
     // Alertas SLA
     useEffect(() => {
@@ -273,8 +282,6 @@ export default function Main({ slaConfig }) {
             setTimeout(() => processNextAlert(), 500);
         }
     }, [ticketsAbertos, slaConfig, processNextAlert]);
-
-    
 
     // ==================== CÁLCULO DE MÉTRICAS DOS ATENDENTES ====================
     const dadosParaExibir = useMemo(() => {
@@ -306,34 +313,91 @@ export default function Main({ slaConfig }) {
             .sort((a, b) => b.total - a.total);
     }, [ticketsAndamento, ticketsFinalizados]);
 
-    return (
+        return (
         <main className={`${style.layout} ${style.cyberLayout}`}>
-            {/* HERO CYBERPUNK */}
-            <section className={style.heroSection}>
-                <div className={style.heroCard}>
-                    <div className={style.heroContent}>
-                        
-                        <h1 className={style.heroTitle}>Painel de Suporte SLA</h1>
-                        <p className={style.heroSubtitle}>Monitoramento em Tempo Real • Alertas Inteligentes • SLAs Automáticos</p>
-                        <div className={style.statsGrid}>
-                            <div className={style.statCard}>
-                                <span className={style.statValue}>{ticketsAbertos.length}</span>
-                                <span className={style.statLabel}>Tickets Críticos</span>
-                            </div>
-                            <div className={style.statCard}>
-                                <span className={style.statValue}>{ticketsAndamento.length}</span>
-                                <span className={style.statLabel}>Em Andamento</span>
-                            </div>
-                            <div className={style.statCard}>
-                                <span className={style.statValue}>{ticketsFinalizados.length}</span>
-                                <span className={style.statLabel}>Finalizados Hoje</span>
-                            </div>
+            <div className={style.layoutContainer}>
+                {/* SIDEBAR - TIME ATIVO NA LATERAL */}
+                <aside className={style.sidebar}>
+                    <div className={style.teamSidebar}>
+                        <div className={style.sidebarHeader}>
+                            <h3 className={style.sidebarTitle}>👥 TIME ATIVO</h3>
+                            <span className={style.sidebarBadge}>Real-time</span>
+                        </div>
+                        <div className={style.atendentesList}>
+                            {dadosParaExibir.map((atendente) => (
+                                <div key={atendente.nome} className={style.atendenteItem}>
+                                    <div className={style.atendenteAvatarSidebar}>
+                                        {atendente.nome.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className={style.atendenteInfoSidebar}>
+                                        <div className={style.atendenteNomeSidebar}>{atendente.nome}</div>
+                                        <div className={style.atendenteStatsSidebar}>
+                                            <span className={`${style.statBadgeSidebar} ${style.andamentoSidebar}`}>
+                                                ⚙️ {atendente.em_andamento}
+                                            </span>
+                                            <span className={`${style.statBadgeSidebar} ${style.finalizadoSidebar}`}>
+                                                ✅ {atendente.finalizados}
+                                            </span>
+                                            <span className={`${style.statBadgeSidebar} ${style.totalSidebar}`}>
+                                                📊 {atendente.total}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </aside>
 
-            {/* Modal de áudio FUTURISTA */}
+                {/* CONTEÚDO PRINCIPAL */}
+                <div className={style.mainContent}>
+                    {/* HERO CYBERPUNK */}
+                    <section className={style.heroSection}>
+                        <div className={style.heroCard}>
+                            <div className={style.heroContent}>
+                                <h1 className={style.heroTitle}>Painel de Suporte SLA</h1>
+                                <p className={style.heroSubtitle}>Monitoramento em Tempo Real • Alertas Inteligentes • SLAs Automáticos</p>
+                                <div className={style.statsGrid}>
+                                    <div className={style.statCard}>
+                                        <span className={style.statValue}>{ticketsAbertos.length}</span>
+                                        <span className={style.statLabel}>Tickets Críticos</span>
+                                    </div>
+                                    <div className={style.statCard}>
+                                        <span className={style.statValue}>{ticketsAndamento.length}</span>
+                                        <span className={style.statLabel}>Em Andamento</span>
+                                    </div>
+                                    <div className={style.statCard}>
+                                        <span className={style.statValue}>{ticketsFinalizados.length}</span>
+                                        <span className={style.statLabel}>Finalizados Hoje</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SEÇÃO PRINCIPAL - TICKETS EM SLA */}
+                    <section className={style.mainSection}>
+                        <div className={style.highlightHeader}>
+                            <div className={style.highlightIcon}>🎯</div>
+                            <div className={style.highlightText}>
+                                <div className={style.highlightTitle}>TICKETS EM SLA</div>
+                                <div className={style.highlightSub}>Prioridade máxima - Assuma agora!</div>
+                            </div>
+                            <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
+                        </div>
+                        <div className={style.tableContainer}>
+                            <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
+                        </div>
+                    </section>
+
+                    {/* INFO DE ATUALIZAÇÃO */}
+                    <div className={style.footerInfo}>
+                        🕐 Última sincronização: <span className={style.refreshTime}>{lastRefresh.toLocaleTimeString('pt-BR')}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modais (mantidos fora do layout principal) */}
             {!audioPermissionGranted && (
                 <div className={style.audioModal}>
                     <div className={style.audioCard}>
@@ -350,7 +414,6 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* Alerta visual NEON */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
@@ -375,62 +438,10 @@ export default function Main({ slaConfig }) {
                     </div>
                 </div>
             )}
-
-            {/* CARDS ATENDENTES CYBERPUNK */}
-            {dadosParaExibir.length > 0 && (
-                <section className={style.teamSection}>
-                    <div className={style.sectionHeader}>
-                        <h3 className={style.sectionTitle}>👥 Time Ativo</h3>
-                        <span className={style.sectionBadge}>Real-time</span>
-                    </div>
-                    <div className={style.atendentesCards}>
-                        {dadosParaExibir.map((atendente) => (
-                            <div key={atendente.nome} className={style.atendenteCard}>
-                                <div className={style.atendenteAvatar}>
-                                    {atendente.nome.charAt(0).toUpperCase()}
-                                </div>
-                                <div className={style.atendenteInfo}>
-                                    <div className={style.atendenteNome}>{atendente.nome}</div>
-                                    <div className={style.atendenteStats}>
-                                        <span className={`${style.statBadge} ${style.andamento}`}>
-                                            ⚙️ {atendente.em_andamento}
-                                        </span>
-                                        <span className={`${style.statBadge} ${style.finalizado}`}>
-                                            ✅ {atendente.finalizados}
-                                        </span>
-                                        <span className={`${style.statBadge} ${style.total}`}>
-                                            📊 {atendente.total}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-                {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS */}
-                <section className={style.mainSection}>
-                    <div className={style.highlightHeader}>
-                        <div className={style.highlightIcon}>🎯</div>
-                        <div>
-                            <div className={style.highlightTitle}>TICKETS EM SLA</div>
-                            <div className={style.highlightSub}>Prioridade máxima - Assuma agora!</div>
-                        </div>
-                        <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
-                    </div>
-                    <div className={style.tableContainer}>
-                        <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
-                    </div>
-                </section>
-
-            {/* INFO DE ATUALIZAÇÃO NEON */}
-            <div className={style.footerInfo}>
-                🕐 Última sincronização: <span className={style.refreshTime}>{lastRefresh.toLocaleTimeString('pt-BR')}</span>
-            </div>
         </main>
     );
 }
+
 /*
 vercel --prod
 */

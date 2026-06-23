@@ -77,12 +77,14 @@ src/Components/NowPlaying/index.jsx
 src/Components/NowPlaying/style.module.css
 src/Components/test.json
 src/data.js
+src/DebugConsole.js
 src/index.css
 src/index.js
 src/logo.svg
 src/reportWebVitals.js
 src/setupTests.js
 src/style.module.css
+src/TvApp.js
 </directory_structure>
 
 <files>
@@ -913,6 +915,394 @@ export default function NowPlaying({ evento }) {
 
 </file>
 
+<file path="src/DebugConsole.js">
+// src/DebugConsole.js
+import { useState, useEffect } from 'react';
+
+function DebugConsole() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/runrun?t=${Date.now()}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      const rawTasks = Array.isArray(data) ? data : [data];
+      
+      // Processa os dados
+      const processedTasks = rawTasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        client_name: task.client_name,
+        board_stage_name: task.board_stage_name,
+        is_closed: task.is_closed,
+        created_at: task.created_at,
+        close_date: task.close_date,
+        user_name: task.user_name,
+        assignments: task.assignments,
+        estimated_at: task.estimated_at
+      }));
+      
+      setTasks(processedTasks);
+      setLastRefresh(new Date());
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("Erro na busca:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Estatísticas
+  const ticketsAbertos = tasks.filter(t => 
+    t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação"
+  );
+  
+  const ticketsAndamento = tasks.filter(t => t.board_stage_name === "Fazendo");
+  
+  const ticketsFinalizadosHoje = tasks.filter(t => {
+    const isEntregue = String(t.board_stage_name).toLowerCase() === "entregues" || t.is_closed === true;
+    if (!isEntregue) return false;
+    
+    const closeDate = t.close_date ? new Date(t.close_date) : null;
+    const today = new Date();
+    if (closeDate) {
+      return closeDate.getDate() === today.getDate() &&
+             closeDate.getMonth() === today.getMonth() &&
+             closeDate.getFullYear() === today.getFullYear();
+    }
+    return false;
+  });
+
+  const ticketsFinalizadosTotal = tasks.filter(t => 
+    String(t.board_stage_name).toLowerCase() === "entregues" || t.is_closed === true
+  );
+
+  // Categorias para debug
+  const categorias = {};
+  tasks.forEach(task => {
+    const stage = task.board_stage_name || "Sem categoria";
+    categorias[stage] = (categorias[stage] || 0) + 1;
+  });
+
+  return (
+    <div style={styles.container}>
+      <h1 style={styles.title}>🔍 Console de Debug - RunRun.it</h1>
+      
+      {/* Botão de atualização */}
+      <div style={styles.header}>
+        <button onClick={fetchData} style={styles.refreshBtn}>
+          🔄 Atualizar Agora
+        </button>
+        {lastRefresh && (
+          <span style={styles.lastRefresh}>
+            Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}
+          </span>
+        )}
+      </div>
+
+      {/* ERRO se houver */}
+      {error && (
+        <div style={styles.errorBox}>
+          <strong>❌ Erro:</strong> {error}
+          <br />
+          <small>Verifique se o servidor está rodando e as credenciais estão corretas.</small>
+        </div>
+      )}
+
+      {/* LOADING */}
+      {loading && tasks.length === 0 && (
+        <div style={styles.loading}>Carregando dados...</div>
+      )}
+
+      {/* ESTATÍSTICAS PRINCIPAIS */}
+      {!loading && (
+        <>
+          {/* Cards de Estatísticas */}
+          <div style={styles.statsGrid}>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>{ticketsAbertos.length}</div>
+              <div style={styles.statLabel}>Tickets em SLA (A fazer/Em aprovação)</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>{ticketsAndamento.length}</div>
+              <div style={styles.statLabel}>Em Andamento (Fazendo)</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>{ticketsFinalizadosHoje.length}</div>
+              <div style={styles.statLabel}>Finalizados Hoje</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>{ticketsFinalizadosTotal.length}</div>
+              <div style={styles.statLabel}>Total Finalizados</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statValue}>{tasks.length}</div>
+              <div style={styles.statLabel}>Total de Tickets</div>
+            </div>
+          </div>
+
+          {/* CATEGORIAS (Board Stages) */}
+          <div style={styles.section}>
+            <h2>📋 Distribuição por Status (Board Stage)</h2>
+            <div style={styles.categoryGrid}>
+              {Object.entries(categorias).map(([nome, qtd]) => (
+                <div key={nome} style={styles.categoryItem}>
+                  <span style={styles.categoryName}>{nome}</span>
+                  <span style={styles.categoryCount}>{qtd}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* TICKETS EM SLA (Abertos) */}
+          <div style={styles.section}>
+            <h2>⚠️ Tickets em SLA (A fazer / Em aprovação) - {ticketsAbertos.length}</h2>
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Título</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th>Responsável</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ticketsAbertos.length === 0 ? (
+                    <tr><td colSpan="6" style={styles.emptyRow}>Nenhum ticket em SLA</td></tr>
+                  ) : (
+                    ticketsAbertos.map(task => (
+                      <tr key={task.id}>
+                        <td style={styles.idCell}>#{task.id}</td>
+                        <td>{task.client_name || 'N/A'}</td>
+                        <td style={styles.titleCell}>{task.title?.substring(0, 50) || 'N/A'}</td>
+                        <td><span style={styles.badgeWarning}>{task.board_stage_name}</span></td>
+                        <td>{task.created_at ? new Date(task.created_at).toLocaleString('pt-BR') : 'N/A'}</td>
+                        <td>{task.user_name || 'Pendente'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TICKETS EM ANDAMENTO */}
+          <div style={styles.section}>
+            <h2>⚙️ Em Andamento (Fazendo) - {ticketsAndamento.length}</h2>
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Título</th>
+                    <th>Responsável</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ticketsAndamento.length === 0 ? (
+                    <tr><td colSpan="4" style={styles.emptyRow}>Nenhum ticket em andamento</td></tr>
+                  ) : (
+                    ticketsAndamento.map(task => (
+                      <tr key={task.id}>
+                        <td style={styles.idCell}>#{task.id}</td>
+                        <td>{task.client_name || 'N/A'}</td>
+                        <td style={styles.titleCell}>{task.title?.substring(0, 50) || 'N/A'}</td>
+                        <td>{task.user_name || 'Pendente'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* FINALIZADOS HOJE */}
+          <div style={styles.section}>
+            <h2>✅ Finalizados Hoje - {ticketsFinalizadosHoje.length}</h2>
+            <div style={styles.tableContainer}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Título</th>
+                    <th>Finalizado em</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ticketsFinalizadosHoje.length === 0 ? (
+                    <tr><td colSpan="4" style={styles.emptyRow}>Nenhum ticket finalizado hoje</td></tr>
+                  ) : (
+                    ticketsFinalizadosHoje.map(task => (
+                      <tr key={task.id}>
+                        <td style={styles.idCell}>#{task.id}</td>
+                        <td>{task.client_name || 'N/A'}</td>
+                        <td style={styles.titleCell}>{task.title?.substring(0, 50) || 'N/A'}</td>
+                        <td>{task.close_date ? new Date(task.close_date).toLocaleString('pt-BR') : 'N/A'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    padding: '20px',
+    fontFamily: 'monospace',
+    background: '#0f172a',
+    minHeight: '100vh',
+    color: '#e2e8f0'
+  },
+  title: {
+    fontSize: '24px',
+    marginBottom: '20px',
+    color: '#60a5fa'
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    flexWrap: 'wrap',
+    gap: '10px'
+  },
+  refreshBtn: {
+    background: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold'
+  },
+  lastRefresh: {
+    fontSize: '12px',
+    color: '#94a3b8'
+  },
+  errorBox: {
+    background: '#7f1d1d',
+    padding: '15px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    border: '1px solid #ef4444'
+  },
+  loading: {
+    textAlign: 'center',
+    padding: '40px',
+    color: '#94a3b8'
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '16px',
+    marginBottom: '30px'
+  },
+  statCard: {
+    background: '#1e293b',
+    padding: '20px',
+    borderRadius: '12px',
+    textAlign: 'center'
+  },
+  statValue: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#60a5fa'
+  },
+  statLabel: {
+    fontSize: '12px',
+    color: '#94a3b8',
+    marginTop: '8px'
+  },
+  section: {
+    background: '#1e293b',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '20px'
+  },
+  categoryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '10px',
+    marginTop: '15px'
+  },
+  categoryItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '8px 12px',
+    background: '#0f172a',
+    borderRadius: '8px'
+  },
+  categoryName: {
+    fontSize: '13px',
+    color: '#cbd5e1'
+  },
+  categoryCount: {
+    fontWeight: 'bold',
+    color: '#60a5fa'
+  },
+  tableContainer: {
+    overflowX: 'auto',
+    marginTop: '15px'
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '13px'
+  },
+  idCell: {
+    color: '#60a5fa',
+    fontWeight: 'bold',
+    fontFamily: 'monospace'
+  },
+  titleCell: {
+    maxWidth: '300px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  },
+  badgeWarning: {
+    background: '#dc2626',
+    padding: '4px 8px',
+    borderRadius: '12px',
+    fontSize: '11px',
+    fontWeight: 'bold'
+  },
+  emptyRow: {
+    textAlign: 'center',
+    padding: '20px',
+    color: '#64748b'
+  }
+};
+
+export default DebugConsole;
+</file>
+
 <file path="src/index.js">
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -1276,193 +1666,489 @@ code {
 }
 </file>
 
-<file path="src/style.module.css">
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;800&display=swap');
+<file path="src/TvApp.js">
+// src/TvApp.js
+import { useState, useEffect } from 'react';
 
-.appContainer {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a23 0%, #1a0033 50%, #0f0f2f 100%);
-  position: relative;
-  overflow: hidden;
-  font-family: 'Exo 2', sans-serif;
-}
+// ============================================
+// FUNÇÃO DE CÁLCULO DE HORÁRIO COMERCIAL
+// Conta apenas minutos entre 8h-18h, Segunda a Sexta
+// ============================================
+const calcularMinutosUteis = (dataInicio) => {
+    const inicio = new Date(dataInicio);
+    const agora = new Date();
+    
+    if (inicio >= agora) return 0;
+    
+    let totalMinutos = 0;
+    let current = new Date(inicio);
+    
+    const inicioExpediente = 8;  // 8:00
+    const fimExpediente = 18;     // 18:00
+    
+    // Arredonda para o minuto atual
+    current.setSeconds(0, 0);
+    const agoraArredondado = new Date(agora);
+    agoraArredondado.setSeconds(0, 0);
+    
+    while (current < agoraArredondado) {
+        const diaSemana = current.getDay(); // 0 = Domingo, 6 = Sábado
+        const hora = current.getHours();
+        
+        // Segunda a Sexta (1 a 5)
+        if (diaSemana >= 1 && diaSemana <= 5) {
+            // Dentro do horário comercial
+            if (hora >= inicioExpediente && hora < fimExpediente) {
+                totalMinutos++;
+            }
+        }
+        
+        // Avança 1 minuto
+        current.setMinutes(current.getMinutes() + 1);
+    }
+    
+    return totalMinutos;
+};
 
-.particlesBg {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: 
-    radial-gradient(circle at 20% 80%, rgba(120,119,198,0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(120,119,198,0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120,119,198,0.2) 0%, transparent 50%);
-  animation: particleFloat 20s ease-in-out infinite;
-  z-index: 1;
-}
+// Função para formatar minutos em horas/minutos
+const formatarTempo = (minutes) => {
+    if (!minutes && minutes !== 0) return '0m';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+        if (mins > 0) return `${hours}h ${mins}m`;
+        return `${hours}h`;
+    }
+    return `${mins}m`;
+};
 
-@keyframes particleFloat {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
-}
+function TvApp() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
-.scanlines {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: repeating-linear-gradient(
-    0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch(`/api/runrun?t=${new Date().getTime()}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const rawTasks = Array.isArray(data) ? data : [data];
+      
+      const formattedTasks = rawTasks.map(task => {
+        if (task.assignments && task.assignments.length > 0) {
+          task.exibir_usuarios = task.assignments.map(a => a.assignee_name?.split(' ')[0] || 'N/A').join(' / ');
+        } else {
+          task.exibir_usuarios = task.user_name ? task.user_name.split(' ')[0] : 'Pendente';
+        }
+        
+        // ============================================
+        // CÁLCULO DE TEMPO COM HORÁRIO COMERCIAL
+        // ============================================
+        if (task.created_at) {
+          const minutesDiff = calcularMinutosUteis(task.created_at);
+          task.minutesOpen = minutesDiff;
+          task.timeOpenFormatted = formatarTempo(minutesDiff);
+          
+          // Definir status do SLA baseado no tempo comercial
+          if (minutesDiff <= 15) {
+            task.slaStatus = 'normal';
+            task.slaMessage = `🟢 Normal`;
+          } else if (minutesDiff <= 30) {
+            task.slaStatus = 'warning';
+            task.slaMessage = `🟡 Atenção`;
+          } else if (minutesDiff <= 45) {
+            task.slaStatus = 'critical';
+            task.slaMessage = `🔴 URGENTE`;
+          } else {
+            task.slaStatus = 'critical';
+            task.slaMessage = `🔴 ATRASADO`;
+          }
+        }
+        return task;
+      });
+      
+      setTasks(formattedTasks);
+      setLastRefresh(new Date());
+      setLoading(false);
+    } catch (error) {
+      console.error("Erro:", error);
+      setLoading(false);
+    }
+  };
+
+  const ticketsAbertos = tasks.filter(t => 
+    (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação")
   );
-  pointer-events: none;
-  z-index: 1000;
-  animation: scanlineMove 20s linear infinite;
+
+  const ticketsAndamento = tasks.filter(t => t.board_stage_name === "Fazendo");
+  
+  const ticketsFinalizados = tasks.filter(t => 
+    String(t.board_stage_name).toLowerCase() === "entregues" || t.is_closed === true
+  );
+
+  // Calcular métricas dos atendentes
+  const atendentesMap = new Map();
+  
+  ticketsAndamento.forEach(ticket => {
+    const nome = ticket.exibir_usuarios;
+    if (nome && nome !== 'Pendente') {
+      if (!atendentesMap.has(nome)) {
+        atendentesMap.set(nome, { em_andamento: 0, finalizados: 0 });
+      }
+      atendentesMap.get(nome).em_andamento++;
+    }
+  });
+  
+  ticketsFinalizados.forEach(ticket => {
+    const nome = ticket.exibir_usuarios;
+    if (nome && nome !== 'Pendente') {
+      if (!atendentesMap.has(nome)) {
+        atendentesMap.set(nome, { em_andamento: 0, finalizados: 0 });
+      }
+      atendentesMap.get(nome).finalizados++;
+    }
+  });
+  
+  const atendentes = Array.from(atendentesMap.entries()).map(([nome, dados]) => ({ nome, ...dados }));
+
+  if (loading) {
+    return (
+      <div style={styles.loading}>
+        <h1>Carregando Painel...</h1>
+        <p>Aguardando dados do servidor</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.container}>
+      {/* Header */}
+      <div style={styles.header}>
+        <h1 style={styles.title}>WMSEXPERT</h1>
+        <p style={styles.subtitle}>Painel de Suporte • Horário Comercial 8h-18h</p>
+        <div style={styles.stats}>
+          <div style={styles.stat}><span style={styles.statValue}>{ticketsAbertos.length}</span><span>Tickets em SLA</span></div>
+          <div style={styles.stat}><span style={styles.statValue}>{ticketsAndamento.length}</span><span>Em andamento</span></div>
+          <div style={styles.stat}><span style={styles.statValue}>{ticketsFinalizados.length}</span><span>Finalizados</span></div>
+        </div>
+      </div>
+
+      {/* Time Ativo - Discreto */}
+      {atendentes.length > 0 && (
+        <div style={styles.teamSection}>
+          <div style={styles.teamHeader}>
+            <span>👥 TIME ATIVO</span>
+            <span style={styles.teamBadge}>{atendentes.length} online</span>
+          </div>
+          <div style={styles.teamList}>
+            {atendentes.map(a => (
+              <div key={a.nome} style={styles.teamCard}>
+                <div style={styles.teamAvatar}>{a.nome.charAt(0)}</div>
+                <div style={styles.teamInfo}>
+                  <div>{a.nome}</div>
+                  <div style={styles.teamStats}>
+                    <span style={styles.badgeBlue}>⚙️ {a.em_andamento}</span>
+                    <span style={styles.badgeGreen}>✅ {a.finalizados}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tickets em SLA - PROTAGONISTA */}
+      <div style={styles.slaSection}>
+        <div style={styles.slaHeader}>
+          <span style={styles.slaIcon}>🎯</span>
+          <div>
+            <h2 style={styles.slaTitle}>TICKETS EM SLA</h2>
+            <p style={styles.slaSub}>Prioridade máxima - Assuma em até 15min!</p>
+          </div>
+          <div style={styles.slaBadge}>{ticketsAbertos.length} ativos</div>
+        </div>
+
+        <div style={styles.tableContainer}>
+          <div style={styles.tableHeader}>
+            <div style={styles.gridHeader}>
+              <span>ID</span>
+              <span>Cliente</span>
+              <span>Tempo Aberto</span>
+              <span>Status SLA</span>
+              <span>Responsável</span>
+            </div>
+          </div>
+          <div style={styles.tableBody}>
+            {ticketsAbertos.length === 0 ? (
+              <div style={styles.emptyState}>Nenhum ticket em SLA no momento</div>
+            ) : (
+              ticketsAbertos.map(task => (
+                <div key={task.id} style={styles.tableRow}>
+                  <div style={styles.rowId}>#{task.id}</div>
+                  <div style={styles.rowCliente}>{task.client_name || 'N/A'}</div>
+                  <div style={styles.rowTempo}>{task.timeOpenFormatted || '0m'}</div>
+                  <div>
+                    <span style={task.slaStatus === 'critical' ? styles.statusCritical : (task.slaStatus === 'warning' ? styles.statusWarning : styles.statusNormal)}>
+                      {task.slaMessage}
+                    </span>
+                  </div>
+                  <div style={styles.rowResp}>{task.exibir_usuarios || 'Pendente'}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={styles.footer}>
+        🕐 Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')} | ⏰ Contabiliza apenas horário comercial (8h-18h, Seg-Sex)
+      </div>
+    </div>
+  );
 }
 
-@keyframes scanlineMove {
-  0% { background-position: 0 0; }
-  100% { background-position: 0 100vh; }
-}
+const styles = {
+  container: {
+    background: '#0f172a',
+    minHeight: '100vh',
+    padding: '16px',
+    fontFamily: 'Arial, sans-serif',
+    color: '#e2e8f0'
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100vh',
+    background: '#0f172a',
+    color: '#e2e8f0'
+  },
+  header: {
+    background: '#1e293b',
+    borderRadius: '12px',
+    padding: '16px',
+    marginBottom: '20px',
+    textAlign: 'center'
+  },
+  title: {
+    fontSize: '24px',
+    color: '#60a5fa',
+    margin: '0 0 4px 0'
+  },
+  subtitle: {
+    fontSize: '11px',
+    color: '#94a3b8',
+    marginBottom: '16px'
+  },
+  stats: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '24px'
+  },
+  stat: {
+    textAlign: 'center'
+  },
+  statValue: {
+    display: 'block',
+    fontSize: '22px',
+    fontWeight: 'bold',
+    color: '#60a5fa'
+  },
+  teamSection: {
+    background: '#1e293b',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    marginBottom: '20px'
+  },
+  teamHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px',
+    paddingBottom: '8px',
+    borderBottom: '1px solid #334155',
+    fontSize: '12px',
+    color: '#94a3b8'
+  },
+  teamBadge: {
+    background: '#334155',
+    padding: '2px 8px',
+    borderRadius: '10px',
+    fontSize: '10px'
+  },
+  teamList: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px'
+  },
+  teamCard: {
+    background: '#0f172a',
+    borderRadius: '10px',
+    padding: '8px 12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    minWidth: '140px'
+  },
+  teamAvatar: {
+    width: '32px',
+    height: '32px',
+    background: '#3b82f6',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    fontSize: '14px'
+  },
+  teamInfo: {
+    flex: 1
+  },
+  teamStats: {
+    display: 'flex',
+    gap: '6px',
+    marginTop: '4px'
+  },
+  badgeBlue: {
+    background: '#1e3a5f',
+    padding: '2px 6px',
+    borderRadius: '8px',
+    fontSize: '10px',
+    color: '#60a5fa'
+  },
+  badgeGreen: {
+    background: '#14532d',
+    padding: '2px 6px',
+    borderRadius: '8px',
+    fontSize: '10px',
+    color: '#4ade80'
+  },
+  slaSection: {
+    background: '#1e293b',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    marginBottom: '20px'
+  },
+  slaHeader: {
+    background: '#0f172a',
+    padding: '16px 20px',
+    borderBottom: '2px solid #ef4444',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  slaIcon: {
+    fontSize: '28px'
+  },
+  slaTitle: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    margin: 0,
+    color: 'white'
+  },
+  slaSub: {
+    fontSize: '10px',
+    color: '#94a3b8',
+    margin: '4px 0 0 0'
+  },
+  slaBadge: {
+    background: '#dc2626',
+    padding: '6px 16px',
+    borderRadius: '30px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    marginLeft: 'auto'
+  },
+  tableContainer: {
+    overflowX: 'auto'
+  },
+  tableHeader: {
+    background: '#0f172a',
+    borderBottom: '1px solid #334155'
+  },
+  gridHeader: {
+    display: 'grid',
+    gridTemplateColumns: '60px 2fr 90px 1.2fr 1.3fr',
+    gap: '8px',
+    padding: '12px 16px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    color: '#94a3b8'
+  },
+  tableBody: {
+    maxHeight: '500px',
+    overflowY: 'auto'
+  },
+  tableRow: {
+    display: 'grid',
+    gridTemplateColumns: '60px 2fr 90px 1.2fr 1.3fr',
+    gap: '8px',
+    padding: '10px 16px',
+    borderBottom: '1px solid #1e293b',
+    fontSize: '13px',
+    alignItems: 'center'
+  },
+  rowId: {
+    fontWeight: 'bold',
+    color: '#60a5fa',
+    fontFamily: 'monospace'
+  },
+  rowCliente: {
+    fontWeight: '500'
+  },
+  rowTempo: {
+    fontFamily: 'monospace'
+  },
+  rowResp: {
+    color: '#94a3b8'
+  },
+  statusCritical: {
+    background: '#dc2626',
+    padding: '4px 10px',
+    borderRadius: '16px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    display: 'inline-block'
+  },
+  statusWarning: {
+    background: '#d97706',
+    padding: '4px 10px',
+    borderRadius: '16px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    display: 'inline-block'
+  },
+  statusNormal: {
+    background: '#16a34a',
+    padding: '4px 10px',
+    borderRadius: '16px',
+    fontSize: '11px',
+    fontWeight: 'bold',
+    display: 'inline-block'
+  },
+  emptyState: {
+    textAlign: 'center',
+    padding: '40px',
+    color: '#64748b'
+  },
+  footer: {
+    textAlign: 'center',
+    padding: '12px',
+    fontSize: '10px',
+    color: '#475569'
+  }
+};
 
-.mainLayout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  padding: 32px;
-  max-width: 1600px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 2;
-}
-
-/* Cards Futuristas */
-.cyberCard {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 24px;
-  box-shadow: 
-    0 25px 50px rgba(0,0,0,0.5),
-    0 0 50px rgba(0, 255, 255, 0.1);
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  position: relative;
-  overflow: hidden;
-}
-
-.cyberCard::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0,255,255,0.2), transparent);
-  transition: left 0.6s;
-}
-
-.cyberCard:hover::before { left: 100%; }
-.cyberCard:hover {
-  transform: translateY(-12px) scale(1.02);
-  box-shadow: 
-    0 35px 70px rgba(0,0,0,0.7),
-    0 0 100px rgba(0, 255, 255, 0.4);
-  border-color: rgba(0, 255, 255, 0.6);
-}
-
-/* Headers Neon */
-.neonHeader {
-  background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(138,43,226,0.15));
-  border-bottom: 1px solid rgba(0,255,255,0.3);
-  padding: 20px 28px;
-  font-family: 'Orbitron', monospace;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-/* Sliders Holográficos (ConfigPanel) */
-.holoSlider {
-  -webkit-appearance: none;
-  height: 8px;
-  background: rgba(0,255,255,0.1);
-  border-radius: 10px;
-  outline: none;
-  position: relative;
-}
-
-.holoSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 28px; height: 28px;
-  background: linear-gradient(135deg, #00ffff, #7b68ee);
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 
-    0 0 20px rgba(0,255,255,0.8),
-    inset 0 0 10px rgba(255,255,255,0.3);
-  transition: all 0.3s ease;
-}
-
-.holoSlider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 40px rgba(0,255,255,1);
-}
-
-/* Toggle Magnético */
-.magneticToggle {
-  position: relative;
-  width: 70px; height: 36px;
-  background: rgba(31,41,55,0.6);
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.4s ease;
-  border: 1px solid rgba(0,255,255,0.3);
-}
-
-.magneticToggle::before {
-  content: '';
-  position: absolute;
-  width: 28px; height: 28px;
-  background: linear-gradient(135deg, #00ffff, #7b68ee);
-  border-radius: 50%;
-  top: 3px; left: 3px;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  box-shadow: 0 0 20px rgba(0,255,255,0.6);
-}
-
-.magneticToggle.checked {
-  background: linear-gradient(135deg, rgba(0,255,255,0.3), rgba(138,43,226,0.3));
-}
-
-.magneticToggle.checked::before {
-  transform: translateX(34px);
-}
-
-/* Botões Neon */
-.neonBtn {
-  background: linear-gradient(135deg, #00ffff, #7b68ee);
-  border: none;
-  padding: 14px 32px;
-  border-radius: 16px;
-  font-family: 'Orbitron', monospace;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.neonBtn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.6s;
-}
-
-.neonBtn:hover::before { left: 100%; }
-.neonBtn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px rgba(0,255,255,0.4);
-}
-
-@media (max-width: 768px) {
-  .mainLayout { padding: 16px; gap: 16px; }
-  .cyberCard { border-radius: 16px; }
-}
+export default TvApp;
 </file>
 
 <file path="public/index.html">
@@ -1896,6 +2582,307 @@ export const data = [
 ]
 </file>
 
+<file path="src/style.module.css">
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;800&display=swap');
+
+.appContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a23 0%, #1a0033 50%, #0f0f2f 100%);
+  position: relative;
+  overflow: hidden;
+  font-family: 'Exo 2', sans-serif;
+}
+
+.particlesBg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(120,119,198,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(120,119,198,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120,119,198,0.2) 0%, transparent 50%);
+  animation: particleFloat 20s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes particleFloat {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.scanlines {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px, rgba(0,255,255,0.03) 2px, rgba(0,255,255,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+  animation: scanlineMove 20s linear infinite;
+}
+
+@keyframes scanlineMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+.mainLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Cards Futuristas */
+.cyberCard {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 24px;
+  box-shadow: 
+    0 25px 50px rgba(0,0,0,0.5),
+    0 0 50px rgba(0, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.cyberCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,255,255,0.2), transparent);
+  transition: left 0.6s;
+}
+
+.cyberCard:hover::before { left: 100%; }
+.cyberCard:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 
+    0 35px 70px rgba(0,0,0,0.7),
+    0 0 100px rgba(0, 255, 255, 0.4);
+  border-color: rgba(0, 255, 255, 0.6);
+}
+
+/* Headers Neon */
+.neonHeader {
+  background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(138,43,226,0.15));
+  border-bottom: 1px solid rgba(0,255,255,0.3);
+  padding: 20px 28px;
+  font-family: 'Orbitron', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Sliders Holográficos (ConfigPanel) */
+.holoSlider {
+  -webkit-appearance: none;
+  height: 8px;
+  background: rgba(0,255,255,0.1);
+  border-radius: 10px;
+  outline: none;
+  position: relative;
+}
+
+.holoSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #00ffff, #7b68ee);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 
+    0 0 20px rgba(0,255,255,0.8),
+    inset 0 0 10px rgba(255,255,255,0.3);
+  transition: all 0.3s ease;
+}
+
+.holoSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 40px rgba(0,255,255,1);
+}
+
+/* Toggle Magnético */
+.magneticToggle {
+  position: relative;
+  width: 70px; height: 36px;
+  background: rgba(31,41,55,0.6);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  border: 1px solid rgba(0,255,255,0.3);
+}
+
+.magneticToggle::before {
+  content: '';
+  position: absolute;
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #00ffff, #7b68ee);
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 0 20px rgba(0,255,255,0.6);
+}
+
+.magneticToggle.checked {
+  background: linear-gradient(135deg, rgba(0,255,255,0.3), rgba(138,43,226,0.3));
+}
+
+.magneticToggle.checked::before {
+  transform: translateX(34px);
+}
+
+/* Botões Neon */
+.neonBtn {
+  background: linear-gradient(135deg, #00ffff, #7b68ee);
+  border: none;
+  padding: 14px 32px;
+  border-radius: 16px;
+  font-family: 'Orbitron', monospace;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.neonBtn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.6s;
+}
+
+.neonBtn:hover::before { left: 100%; }
+.neonBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(0,255,255,0.4);
+}
+
+@media (max-width: 768px) {
+  .mainLayout { padding: 16px; gap: 16px; }
+  .cyberCard { border-radius: 16px; }
+}
+
+/* ============================================ */
+/* FALLBACK PARA TVs SAMSUNG E NAVEGADORES ANTIGOS */
+/* ============================================ */
+
+/* Detecta navegador da Samsung TV e aplica fallback */
+@media all and (-webkit-transform-3d) and (pointer: coarse) and (max-width: 1920px) {
+  /* Samsung TV detectada - remove backdrop-filter */
+  .cyberCard {
+    background: #0f172a !important;
+    backdrop-filter: none !important;
+    background-image: linear-gradient(135deg, #0f172a, #1e1b4b) !important;
+  }
+  
+  .particlesBg, .scanlines {
+    display: none !important;
+  }
+  
+  .neonHeader {
+    background: #1e293b !important;
+  }
+}
+
+/* Fallback para navegadores que não suportam backdrop-filter */
+@supports not (backdrop-filter: blur(20px)) {
+  .cyberCard {
+    background: #0f172a !important;
+    backdrop-filter: none !important;
+  }
+  
+  .neonHeader {
+    background: #1e293b !important;
+  }
+  
+  .particlesBg {
+    display: none !important;
+  }
+}
+
+/* Garantir que o gradiente de fundo funcione sempre */
+.appContainer {
+  background: linear-gradient(135deg, #0a0a23 0%, #1a0033 50%, #0f0f2f 100%);
+  background-color: #0a0a23; /* fallback sólido */
+}
+
+/* ============================================ */
+/* FALLBACK PARA TV SAMSUNG - NÃO ALTERA O ORIGINAL */
+/* ============================================ */
+
+@supports not (backdrop-filter: blur(10px)) {
+  .cyberCard {
+    backdrop-filter: none !important;
+    background: #1e293b !important;
+  }
+  
+  .neonHeader {
+    background: #1e293b !important;
+  }
+  
+  .particlesBg,
+  .scanlines {
+    display: none !important;
+  }
+  
+  /* Fallback para gradientes de texto */
+  .mainTitle {
+    background: none !important;
+    -webkit-text-fill-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+  }
+}
+
+/* ============================================ */
+/* FIX SAMSUNG TV */
+/* ============================================ */
+
+.samsung-tv .particlesBg,
+.samsung-tv .scanlines {
+  display: none !important;
+}
+
+/* evita crash de blur */
+@supports not ((backdrop-filter: blur(1px))) {
+
+  .glass,
+  .cyberCard,
+  .card,
+  .panel,
+  .modal,
+  .header {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(15, 23, 42, 0.96) !important;
+  }
+}
+
+/* evita bug de renderização */
+.samsung-tv * {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* corrige bug comum do grid no tizen */
+.samsung-tv .mainLayout {
+  width: 100%;
+  min-width: 0;
+}
+
+/* evita overflow quebrado */
+.samsung-tv .appContainer {
+  overflow-x: hidden;
+}
+</file>
+
 <file path="package.json">
 {
   "name": "app",
@@ -1944,21 +2931,44 @@ export const data = [
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-arrow-functions": "^7.27.1",
+    "@babel/plugin-transform-template-literals": "^7.27.1",
+    "@babel/preset-env": "^7.29.5",
+    "@babel/preset-react": "^7.28.5",
+    "@craco/craco": "^7.1.0"
   }
 }
 </file>
 
 <file path="src/App.js">
+// App.js - Versão corrigida (Hooks sempre chamados)
 import { useState, useEffect } from 'react';
 import './App.css';
 import Header from './Components/Header';
 import Main from './Components/Main';
 import ConfigPanel from './Components/ConfigPanel';
+import TvApp from './TvApp';
+import DebugConsole from './DebugConsole';
 import style from './style.module.css';
 
 function App() {
-  const [configOpen, setConfigOpen] = useState(false);
+  // ============================================
+  // TODOS OS HOOKS DEVEM SER CHAMADOS PRIMEIRO
+  // NÃO CONDICIONALMENTE!
+  // ============================================
   
+  // Detecta modo debug (sem hook, é só uma variável)
+  const isDebugMode = typeof window !== 'undefined' && (
+    window.location.search.includes('debug=true') ||
+    localStorage.getItem('debugMode') === 'true'
+  );
+
+  // Hooks (sempre chamados, na mesma ordem)
+  const [isTvBrowser, setIsTvBrowser] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [configOpen, setConfigOpen] = useState(false);
   const [slaConfig, setSlaConfig] = useState(() => {
     const saved = localStorage.getItem('slaConfig');
     if (saved) {
@@ -1968,33 +2978,36 @@ function App() {
         console.error('Erro ao carregar configurações', e);
       }
     }
-    // Configurações padrão - SLA de Suporte e Desenvolvimento
     return {
-      // SLA Suporte
-      supportTakeoverTime: 15,      // 15 min para assumir ticket
-      supportWarningTime: 30,       // 30 min alerta de atraso
-      supportResolutionTime: 45,    // 45 min para resolver
-      
-      // SLA Desenvolvimento
-      escalationTime: 45,           // 45 min para escalonar
-      devResolutionTime: 60,        // 60 min para correção
-      
-      // Filtros
-      openTicketsDays: 2,           // Exibir tickets dos últimos 2 dias
-      finishedDays: 1,              // Exibir finalizados do dia
-      
-      // Notificações
+      supportTakeoverTime: 15,
+      supportWarningTime: 30,
+      supportResolutionTime: 45,
+      escalationTime: 45,
+      devResolutionTime: 60,
+      openTicketsDays: 2,
+      finishedDays: 1,
       soundEnabled: true,
       voiceEnabled: true,
       alertRepeat: 2
     };
   });
-  
-  const [isLoading, setIsLoading] = useState(true);
 
+  // useEffect SEMPRE chamado
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    // Detecta navegador da TV Samsung
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isSamsungTv = userAgent.includes('tizen') || 
+                         userAgent.includes('samsungbrowser') ||
+                         userAgent.includes('smarttv');
+    
+    console.log('USER AGENT:', userAgent);
+    console.log('IS SAMSUNG TV:', isSamsungTv);
+    
+    // Detecta também por falta de suporte a backdrop-filter
+    const supportsBackdropFilter = CSS.supports('backdrop-filter', 'blur(10px)');
+    
+    setIsTvBrowser(isSamsungTv || !supportsBackdropFilter);
+    setIsLoading(false);
   }, []);
 
   const handleSaveConfig = (newConfig) => {
@@ -2002,24 +3015,20 @@ function App() {
     localStorage.setItem('slaConfig', JSON.stringify(newConfig));
     setConfigOpen(false);
     
+    // Notificação de sucesso
     const notification = document.createElement('div');
     notification.textContent = '✅ Configurações salvas com sucesso!';
     notification.style.cssText = `
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: linear-gradient(135deg, #00ffff, #7b68ee);
+      background: #3b82f6;
       color: white;
-      padding: 16px 28px;
-      border-radius: 20px;
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(0,255,255,0.5);
+      padding: 12px 24px;
+      border-radius: 12px;
       z-index: 10002;
-      animation: neonPulse 2s ease-in-out;
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      letter-spacing: 1px;
-      box-shadow: 0 10px 30px rgba(0,255,255,0.4);
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     `;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 2000);
@@ -2027,17 +3036,48 @@ function App() {
     window.dispatchEvent(new Event('refreshData'));
   };
 
+  // ============================================
+  // RENDERIZAÇÃO CONDICIONAL DEPOIS DOS HOOKS
+  // ============================================
+  
+  // 1. Prioridade: Modo Debug
+  if (isDebugMode) {
+    return <DebugConsole />;
+  }
+
+  // 2. Segunda prioridade: TV Samsung
+  if (isTvBrowser) {
+    return <TvApp />;
+  }
+
+  // 3. Tela de loading
   if (isLoading) {
     return (
-      <div className={style.loadingOverlay}>
-        <div className={style.loadingContent}>
-          <div className={style.loadingSpinner}></div>
-          <div className={style.loadingText}>Iniciando Sistema CyberSupport...</div>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#0f172a',
+        color: 'white'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #3b82f6',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }} />
+          <div>Iniciando Sistema...</div>
         </div>
       </div>
     );
   }
 
+  // 4. App normal
   return (
     <div className={style.appContainer}>
       <div className={style.particlesBg} />
@@ -2057,269 +3097,160 @@ function App() {
   );
 }
 
+// Adicione esta keyframe global se não existir
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
+
 export default App;
 </file>
 
 <file path="src/Components/Main/Tabela/style.module.css">
+/* src/Components/Main/Tabela/style.module.css - Adicione/atualize estas partes */
+
+/* ============================================ */
+/* ESTILOS ESPECIAIS PARA TICKETS EM SLA        */
+/* ============================================ */
+
 .containerTable {
     width: 100%;
-    background: rgba(2, 6, 23, 0.6);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
+    background: rgba(2, 6, 23, 0.4);
+    border-radius: 0 0 20px 20px;
     display: flex;
     flex-direction: column;
     height: 100%;
     overflow: hidden;
-    border: 1px solid rgba(56, 189, 248, 0.1);
-    transition: all 0.3s ease;
 }
 
-.containerTable:hover {
-    border-color: rgba(56, 189, 248, 0.2);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
+/* HEADER DA TABELA MAIS DESTACADO */
 .tableHeader {
-    padding: 0px 0px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.6));
-    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
-    border-radius: 20px 20px 0 0;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(168, 85, 247, 0.1));
+    border-bottom: 2px solid rgba(56, 189, 248, 0.3);
 }
 
 .tableHeader h3 {
     color: white;
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.tableHeader .badge {
-    background: rgba(56, 189, 248, 0.2);
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: #e2630f;
-}
-
-.tableBody {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-}
-
-/* GRID PARA TICKETS ABERTOS - 5 colunas */
+/* GRID PRINCIPAL - MAIS ESPAÇOSO */
 .labelsGridAbertos, .elementTableAbertos {
     display: grid;
-    grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr;
-    gap: 12px;
-    align-items: center;
-    padding: 12px 16px;
-}
-
-/* GRID PARA EM ANDAMENTO - 4 colunas - MAIS ESPAÇO */
-.labelsGridAndamento, .elementTableAndamento {
-    display: grid;
-    grid-template-columns: 70px 2fr 120px 1.5fr;
+    grid-template-columns: 70px 2.2fr 100px 1.6fr 1.4fr;
     gap: 16px;
     align-items: center;
     padding: 14px 20px;
-    width: 100%;
 }
 
-/* GRID PARA FINALIZADOS - 5 colunas */
-.labelsGridFinalizados, .elementTableFinalizados {
-    display: grid;
-    grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr;
-    gap: 12px;
-    align-items: center;
-    padding: 12px 16px;
-}
-
-.labelsGridAbertos, .labelsGridAndamento, .labelsGridFinalizados {
+/* LABELS DO CABEÇALHO */
+.labelsGridAbertos {
     color: #94a3b8;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    background: rgba(2, 6, 23, 0.8);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.15);
     position: sticky;
     top: 0;
-    background: rgba(2, 6, 23, 0.95);
-    backdrop-filter: blur(10px);
     z-index: 10;
-    border-bottom: 1px solid rgba(56, 189, 248, 0.1);
-    margin-bottom: 8px;
 }
 
-.elementTableAbertos, .elementTableAndamento, .elementTableFinalizados {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.6));
+/* LINHAS DOS TICKETS */
+.elementTableAbertos {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(2, 6, 23, 0.5));
     border-radius: 12px;
     margin-bottom: 8px;
     color: #e2e8f0;
-    font-size: 13px;
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
-    animation: fadeInUp 0.3s ease;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(56, 189, 248, 0.05);
 }
 
-.elementTableAbertos:hover, .elementTableAndamento:hover, .elementTableFinalizados:hover {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+.elementTableAbertos:hover {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.6));
     transform: translateX(4px);
-    border-color: rgba(56, 189, 248, 0.3);
+    border-color: rgba(56, 189, 248, 0.2);
 }
 
-/* Responsivo para telas maiores - EM ANDAMENTO OCUPA MAIS ESPAÇO */
-@media (min-width: 1400px) {
-    .labelsGridAndamento, .elementTableAndamento {
-        grid-template-columns: 80px 2.2fr 140px 1.8fr;
-        gap: 20px;
-        padding: 16px 24px;
-    }
-    
-    .labelsGridAbertos, .elementTableAbertos {
-        grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr;
-        gap: 16px;
-    }
-    
-    .labelsGridFinalizados, .elementTableFinalizados {
-        grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr;
-        gap: 16px;
-    }
+/* ID DO TICKET - DESTAQUE */
+.elementTableAbertos div:first-child {
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    color: #38bdf8;
+    font-size: 15px;
 }
 
-/* Responsivo para telas médias */
-@media (min-width: 1200px) and (max-width: 1399px) {
-    .labelsGridAndamento, .elementTableAndamento {
-        grid-template-columns: 75px 2fr 130px 1.6fr;
-        gap: 18px;
-        padding: 14px 20px;
-    }
+/* NOME DO CLIENTE */
+.elementTableAbertos div:nth-child(2) {
+    font-weight: 600;
+    color: #f1f5f9;
 }
 
-/* Responsivo para telas menores */
-@media (max-width: 1000px) {
-    .labelsGridAndamento, .elementTableAndamento {
-        grid-template-columns: 60px 1.5fr 100px 1.2fr;
-        gap: 10px;
-        padding: 10px 14px;
-    }
-    
-    .labelsGridAbertos, .elementTableAbertos {
-        grid-template-columns: 60px 1.5fr 80px 1fr 1fr;
-        gap: 8px;
-        padding: 10px 12px;
-    }
-    
-    .labelsGridFinalizados, .elementTableFinalizados {
-        grid-template-columns: 60px 1.5fr 80px 1fr 1fr;
-        gap: 8px;
-        padding: 10px 12px;
-    }
+/* TEMPO ABERTO */
+.elementTableAbertos div:nth-child(3) {
+    font-family: monospace;
+    font-size: 13px;
+    color: #cbd5e1;
 }
 
-/* Status de SLA */
-.statusCritical {
-    background: #ef4444;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
+/* STATUS BADGES - MAIS VÍVIDOS */
+.elementTableAbertos div:nth-child(4) span {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
     font-weight: 700;
-    animation: pulseUrgent 1s infinite;
     white-space: nowrap;
+    display: inline-block;
+}
+
+.statusCritical {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    animation: pulseUrgent 1s infinite;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
 }
 
 .statusWarning {
-    background: #f59e0b;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
 }
 
 .statusNormal {
-    background: #22c55e;
-    color: #052e16;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
 }
 
 .statusDev {
-    background: #8b5cf6;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     color: white;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
 }
 
 .statusDefault {
-    background: #1e293b;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
-    white-space: nowrap;
+    background: #334155;
+    color: #cbd5e1;
 }
 
-/* Estilos para o texto dentro das células */
-.elementTableAbertos div, 
-.elementTableAndamento div, 
-.elementTableFinalizados div {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+/* RESPONSÁVEL */
+.elementTableAbertos div:nth-child(5) {
+    color: #94a3b8;
+    font-size: 13px;
 }
 
-/* ID do ticket - estilo monoespaçado */
-.elementTableAbertos div:first-child,
-.elementTableAndamento div:first-child,
-.elementTableFinalizados div:first-child {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    color: #38bdf8;
-}
-
-/* Nome do cliente */
-.elementTableAbertos div:nth-child(2),
-.elementTableAndamento div:nth-child(2),
-.elementTableFinalizados div:nth-child(2) {
-    font-weight: 600;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulseUrgent {
-    0%, 100% { 
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% { 
-        opacity: 0.8;
-        transform: scale(1.02);
-    }
-}
-
-/* Scrollbar estilizada */
+/* SCROLLBAR */
 .tableBody::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
 }
 
 .tableBody::-webkit-scrollbar-track {
@@ -2328,161 +3259,48 @@ export default App;
 }
 
 .tableBody::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #38bdf8;
     border-radius: 10px;
 }
 
-.tableBody::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+/* ANIMAÇÃO DE PULSO PARA URGENTE */
+@keyframes pulseUrgent {
+    0%, 100% { 
+        opacity: 1;
+        box-shadow: 0 0 5px rgba(239, 68, 68, 0.3);
+    }
+    50% { 
+        opacity: 0.9;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+    }
 }
 
-/* ============================================ */
-/* MELHORIAS DE FONTES E LEGIBILIDADE          */
-/* ============================================ */
-
-/* Aumentar fontes para melhor legibilidade */
-.elementTableAbertos, 
-.elementTableAndamento, 
-.elementTableFinalizados {
-    font-size: 15px !important;
-    padding: 14px 18px !important;
-}
-
-.elementTableAbertos div, 
-.elementTableAndamento div, 
-.elementTableFinalizados div {
-    font-size: 15px;
-}
-
-/* Status badges maiores */
-.statusCritical, .statusWarning, .statusNormal, .statusDev, .statusDefault {
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-}
-
-/* Badge do header maior */
-.tableHeader .badge {
-    padding: 6px 14px !important;
-    font-size: 14px !important;
-}
-
-.tableHeader h3 {
-    font-size: 20px !important;
-}
-
-/* Grids com colunas mais largas */
-.labelsGridAbertos, .elementTableAbertos {
-    grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
-    gap: 16px !important;
-}
-
-.labelsGridAndamento, .elementTableAndamento {
-    grid-template-columns: 80px 2fr 130px 1.8fr !important;
-    gap: 16px !important;
-}
-
-.labelsGridFinalizados, .elementTableFinalizados {
-    grid-template-columns: 80px 2fr 110px 1.5fr 1.3fr !important;
-    gap: 16px !important;
-}
-
-/* ============================================ */
-/* AUMENTAR FONTES DA TABELA PRINCIPAL          */
-/* ============================================ */
-
-.containerTable {
-    font-size: 16px;
-}
-
-.tableHeader h3 {
-    font-size: 22px !important;
-    padding: 8px 0;
-}
-
-.tableHeader .badge {
-    font-size: 16px !important;
-    padding: 6px 14px !important;
-}
-
-/* Labels do cabeçalho */
-.labelsGridAbertos span {
-    font-size: 13px !important;
-    font-weight: 800 !important;
-    color: #cbd5e1 !important;
-}
-
-/* Linhas da tabela */
-.elementTableAbertos {
-    font-size: 15px !important;
-    padding: 14px 18px !important;
-}
-
-.elementTableAbertos div {
-    font-size: 15px !important;
-}
-
-/* ID do ticket */
-.elementTableAbertos div:first-child {
-    font-size: 16px !important;
-    font-weight: bold;
-}
-
-/* Nome do cliente */
-.elementTableAbertos div:nth-child(2) {
-    font-size: 15px !important;
-    font-weight: 600;
-}
-
-/* Tempo aberto */
-.elementTableAbertos div:nth-child(3) {
-    font-family: monospace;
-    font-size: 14px !important;
-    font-weight: 500;
-}
-
-/* Status badge */
-.elementTableAbertos div:nth-child(4) span {
-    font-size: 13px !important;
-    padding: 6px 12px !important;
-    white-space: nowrap;
-}
-
-/* Responsável */
-.elementTableAbertos div:nth-child(5) {
-    font-size: 14px !important;
-}
-
-/* Grid mais largo para Tickets Abertos */
-.labelsGridAbertos, .elementTableAbertos {
-    grid-template-columns: 80px 2.2fr 120px 1.6fr 1.4fr !important;
-    gap: 16px !important;
-    padding: 14px 20px !important;
-}
-
-/* Ajuste responsivo */
+/* RESPONSIVO */
 @media (max-width: 1200px) {
     .labelsGridAbertos, .elementTableAbertos {
-        grid-template-columns: 70px 1.8fr 100px 1.3fr 1.2fr !important;
-        gap: 12px !important;
-        padding: 12px 16px !important;
-    }
-    
-    .elementTableAbertos {
-        font-size: 13px !important;
+        grid-template-columns: 60px 1.8fr 90px 1.4fr 1.2fr;
+        gap: 12px;
+        padding: 12px 16px;
+        font-size: 12px;
     }
 }
 
 @media (max-width: 900px) {
     .labelsGridAbertos, .elementTableAbertos {
-        grid-template-columns: 60px 1.5fr 90px 1.2fr 1.1fr !important;
-        gap: 8px !important;
-        padding: 10px 12px !important;
+        grid-template-columns: 50px 1.5fr 80px 1.2fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+        font-size: 11px;
+    }
+    
+    .elementTableAbertos div:first-child {
+        font-size: 12px;
     }
 }
 </file>
 
 <file path="src/Components/Main/layout.module.css">
+/* src/Components/Main/layout.module.css */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;800&display=swap');
 
 * { box-sizing: border-box; }
@@ -2490,426 +3308,334 @@ export default App;
 .cyberLayout {
   background: linear-gradient(135deg, #0a0a23 0%, #1a0033 50%, #0f0f2f 100%);
   min-height: 100vh;
-  padding: 24px;
+  padding: 16px 24px;
   font-family: 'Exo 2', sans-serif;
   position: relative;
-  overflow: hidden;
+  width: 100%;
 }
 
-/* HERO CYBERPUNK */
-.heroSection { margin-bottom: 15px; }
-.heroCard {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(30px);
-  border-radius: 36px;
-  padding: 18px 6px;
-  border: 2px solid rgba(0, 255, 255, 0.3);
-  box-shadow: 
-    0 40px 80px rgba(0,0,0,0.8),
-    inset 0 0 0 1px rgba(0,255,255,0.2),
-    0 0 60px rgba(0,255,255,0.15);
-  position: relative;
-  overflow: hidden;
-  animation: heroFloat 6s ease-in-out infinite;
+/* ============================================ */
+/* LAYOUT PRINCIPAL COM SIDEBAR                */
+/* ============================================ */
+.layoutContainer {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  min-width: 100%;
 }
 
-.heroCard::before {
-  content: '';
-  position: absolute;
-  inset: -10px;
-  background: 
-    radial-gradient(circle at 20% 20%, rgba(0,255,255,0.2) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(138,43,226,0.15) 0%, transparent 50%);
-  border-radius: 40px;
-  z-index: -1;
-  animation: heroGlow 4s ease-in-out infinite alternate;
+/* SIDEBAR - TIME ATIVO NA LATERAL */
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
 }
 
-@keyframes heroFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+/* CONTEÚDO PRINCIPAL */
+.mainContent {
+  flex: 1;
+  min-width: 0; /* Previne overflow */
+  width: 100%;
 }
 
-@keyframes heroGlow {
-  0% { opacity: 0.4; }
-  100% { opacity: 0.7; }
+/* ============================================ */
+/* TIME ATIVO - VERSÃO SIDEBAR                 */
+/* ============================================ */
+.teamSidebar {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 20px 16px;
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  position: sticky;
+  top: 20px;
 }
 
-.heroContent { position: relative; z-index: 2; text-align: center; }
-.heroBadge {
-  display: inline-block;
-  background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(138,43,226,0.2));
-  padding: 2px 28px;
-  border-radius: 30px;
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+.sidebarTitle {
   font-family: 'Orbitron', monospace;
   font-size: 14px;
-  font-weight: 800;
-  color: #00ffff;
-  border: 1px solid rgba(0,255,255,0.4);
-  margin-bottom: 20px;
-  box-shadow: 0 0 25px rgba(0,255,255,0.3);
-  letter-spacing: 2px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: 0;
+  letter-spacing: 1px;
 }
+
+.sidebarBadge {
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.atendentesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.atendenteItem {
+  background: rgba(30, 41, 55, 0.5);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.atendenteItem:hover {
+  background: rgba(30, 41, 55, 0.7);
+  border-color: rgba(0, 255, 255, 0.2);
+}
+
+.atendenteAvatarSidebar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+}
+
+.atendenteInfoSidebar {
+  flex: 1;
+}
+
+.atendenteNomeSidebar {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 6px;
+}
+
+.atendenteStatsSidebar {
+  display: flex;
+  gap: 8px;
+}
+
+.statBadgeSidebar {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.andamentoSidebar {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.finalizadoSidebar {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+
+.totalSidebar {
+  background: rgba(0, 255, 255, 0.15);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  color: #2dd4bf;
+}
+
+/* ============================================ */
+/* HEADER SUPERIOR                             */
+/* ============================================ */
+.heroSection { margin-bottom: 20px; }
+
+.heroCard {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  padding: 14px 24px;
+  border: 1px solid rgba(0, 255, 255, 0.15);
+}
+
+.heroContent { text-align: center; }
 
 .heroTitle {
   font-family: 'Orbitron', monospace;
-  font-size: 42px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #00ffff, #7b68ee, #ffffff);
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #38bdf8, #a855f7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 6px 0;
-  letter-spacing: 3px;
-  text-shadow: 0 0 40px rgba(0,255,255,0.6);
+  margin: 0 0 4px 0;
+  letter-spacing: 1px;
 }
 
 .heroSubtitle {
   font-size: 10px;
-  color: #94a3b8;
-  margin-bottom: 20px;
-  font-weight: 500;
-  letter-spacing: 1px;
+  color: #64748b;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
 }
 
 .statsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  justify-content: center;
   gap: 32px;
 }
 
 .statCard { text-align: center; }
+
 .statValue {
   font-family: 'Orbitron', monospace;
-  font-size: 28px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #00ffff, #22c55e, #ffffff);
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #38bdf8, #22c55e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
-  margin-bottom: 8px;
-  filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
 }
+
 .statLabel {
-  font-size: 14px;
+  font-size: 10px;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: 700;
-}
-
-/* Team Section Neon */
-.teamSection {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(25px);
-  border-radius: 32px;
-  padding: 36px;
-  border: 1px solid rgba(0, 255, 255, 0.25);
-  margin-bottom: 40px;
-  box-shadow: 
-    0 30px 60px rgba(0,0,0,0.7),
-    0 0 50px rgba(0,255,255,0.1);
-}
-
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid rgba(0, 255, 255, 0.4);
-}
-
-.sectionTitle {
-  font-family: 'Orbitron', monospace;
-  font-size: 24px;
-  font-weight: 900;
-  color: #00ffff;
-  margin: 0;
-  text-shadow: 0 0 25px rgba(0,255,255,0.6);
-}
-
-.sectionBadge {
-  background: linear-gradient(135deg, rgba(0,255,255,0.25), rgba(138,43,226,0.25));
-  padding: 12px 24px;
-  border-radius: 30px;
-  font-size: 14px;
-  color: #00ffff;
-  font-weight: 800;
-  border: 1px solid rgba(0,255,255,0.5);
-  backdrop-filter: blur(15px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-}
-
-.atendentesCards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-}
-
-.atendenteCard {
-  background: rgba(30, 41, 55, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 28px 32px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.atendenteCard::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0,255,255,0.15), transparent);
-  transition: left 0.7s;
-}
-
-.atendenteCard:hover {
-  transform: translateY(-12px) scale(1.03);
-  border-color: rgba(0, 255, 255, 0.6);
-  box-shadow: 
-    0 35px 70px rgba(0,0,0,0.8),
-    0 0 60px rgba(0, 255, 255, 0.4);
-}
-
-.atendenteCard:hover::before { left: 100%; }
-
-.atendenteAvatar {
-  width: 72px; height: 72px;
-  background: linear-gradient(135deg, #00ffff, #7b68ee);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  font-weight: 900;
-  color: #0a0a23;
-  box-shadow: 
-    0 0 30px rgba(0,255,255,0.7),
-    inset 0 0 20px rgba(255,255,255,0.3);
-  position: relative;
-  z-index: 2;
-}
-
-.atendenteNome {
-  font-size: 22px;
-  font-weight: 800;
-  color: #ffffff;
-  margin-bottom: 12px;
-  font-family: 'Orbitron', monospace;
   letter-spacing: 1px;
 }
 
-.atendenteStats { 
-  display: flex; 
-  gap: 16px; 
-  flex-wrap: wrap; 
-}
-
-.statBadge {
-  padding: 10px 20px;
-  border-radius: 25px;
-  font-size: 14px;
-  font-weight: 800;
-  backdrop-filter: blur(15px);
-  box-shadow: 
-    0 8px 25px rgba(0,0,0,0.4),
-    inset 0 0 10px rgba(255,255,255,0.1);
-  transition: all 0.3s ease;
-}
-
-.statBadge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 35px rgba(0,0,0,0.6);
-}
-
-.andamento {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(59, 130, 246, 0.15));
-  border: 1px solid rgba(59, 130, 246, 0.6);
-  color: #3b82f6;
-}
-
-.finalizado {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.15));
-  border: 1px solid rgba(34, 197, 94, 0.6);
-  color: #22c55e;
-}
-
-.total {
-  background: linear-gradient(135deg, rgba(0, 255, 255, 0.25), rgba(0, 255, 255, 0.15));
-  border: 1px solid rgba(0, 255, 255, 0.6);
-  color: #00ffff;
-}
-
-/* Main Section */
+/* ============================================ */
+/* TICKETS EM SLA - PROTAGONISTA                */
+/* ============================================ */
 .mainSection {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(30px);
-  border-radius: 36px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
   overflow: hidden;
-  border: 2px solid rgba(0, 255, 255, 0.3);
-  box-shadow: 
-    0 40px 80px rgba(0,0,0,0.8),
-    0 0 70px rgba(0,255,255,0.2);
-  margin-bottom: 32px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(56, 189, 248, 0.1);
+  margin-bottom: 20px;
 }
 
 .highlightHeader {
-  background: linear-gradient(135deg, rgba(30, 41, 55, 0.95), rgba(15, 23, 42, 0.95));
-  padding: 22px 20px;
-  border-bottom: 3px solid rgba(0, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(168, 85, 247, 0.08));
+  padding: 20px 28px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
   display: flex;
   align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 14px;
 }
 
 .highlightIcon {
-  font-size: 20px;
-  filter: drop-shadow(0 0 20px rgba(0,255,255,0.8));
-  background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(138,43,226,0.2));
-  padding: 16px;
-  border-radius: 20px;
+  font-size: 32px;
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.4));
+}
+
+.highlightText {
+  flex: 1;
 }
 
 .highlightTitle {
   font-family: 'Orbitron', monospace;
-  font-size: 28px;
-  font-weight: 900;
+  font-size: 22px;
+  font-weight: 800;
   color: #ffffff;
-  margin: 0 0 8px 0;
-  text-shadow: 0 0 25px rgba(0,255,255,0.5);
+  margin: 0;
+  letter-spacing: 1px;
 }
 
 .highlightSub {
-  font-size: 14px;
+  font-size: 11px;
   color: #94a3b8;
-  font-weight: 500;
+  margin-top: 4px;
 }
 
 .highlightBadge {
-  margin-left: auto;
-  background: linear-gradient(135deg, #00ffff, #7b68ee);
-  padding: 6px 22px;
-  border-radius: 30px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  padding: 8px 24px;
+  border-radius: 40px;
   font-size: 20px;
-  font-weight: 900;
-  color: #0a0a23;
-  box-shadow: 
-    0 15px 40px rgba(0,255,255,0.5),
-    inset 0 0 20px rgba(255,255,255,0.3);
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.highlightBadge::before {
+  content: "⚠️";
+  font-size: 16px;
 }
 
 .tableContainer {
-  background: rgba(10, 10, 35, 0.6);
+  background: rgba(10, 10, 35, 0.5);
   padding: 0;
 }
 
-/* Audio Modal */
+/* ============================================ */
+/* MODAIS E ALERTAS                             */
+/* ============================================ */
 .audioModal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  animation: modalSlide 0.4s ease;
+  animation: modalSlide 0.3s ease;
 }
 
 @keyframes modalSlide {
-  from { opacity: 0; transform: scale(0.9) translateY(50px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .audioCard {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 10, 35, 0.95));
-  backdrop-filter: blur(40px);
-  border-radius: 32px;
-  padding: 60px 80px;
-  border: 2px solid rgba(0, 255, 255, 0.4);
+  background: linear-gradient(135deg, #1e1b4b, #0f172a);
+  border-radius: 28px;
+  padding: 40px 60px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
   text-align: center;
-  max-width: 500px;
+  max-width: 450px;
   width: 90%;
-  box-shadow: 
-    0 50px 100px rgba(0,0,0,0.9),
-    0 0 80px rgba(0,255,255,0.3);
 }
 
-.audioIcon {
-  font-size: 80px;
-  margin-bottom: 24px;
-  filter: drop-shadow(0 0 30px rgba(0,255,255,0.8));
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
+.audioIcon { font-size: 56px; margin-bottom: 20px; }
 .audioTitle {
   font-family: 'Orbitron', monospace;
-  font-size: 28px;
-  font-weight: 900;
+  font-size: 22px;
+  font-weight: 700;
   color: #ffffff;
-  margin: 0 0 16px 0;
-  text-shadow: 0 0 25px rgba(0,255,255,0.5);
+  margin: 0 0 12px 0;
 }
-
-.audioText {
-  color: #94a3b8;
-  font-size: 16px;
-  margin-bottom: 32px;
-  line-height: 1.6;
-}
-
+.audioText { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
 .audioButton {
-  background: linear-gradient(135deg, #00ffff, #7b68ee);
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6);
   border: none;
-  padding: 20px 48px;
+  padding: 12px 32px;
   border-radius: 30px;
-  font-family: 'Orbitron', monospace;
-  font-size: 18px;
-  font-weight: 900;
-  color: #0a0a23;
+  font-weight: 700;
+  color: white;
   cursor: pointer;
-  box-shadow: 
-    0 20px 50px rgba(0,255,255,0.5),
-    inset 0 0 20px rgba(255,255,255,0.4);
-  transition: all 0.4s ease;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  transition: all 0.3s ease;
 }
+.audioButton:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.3); }
 
-.audioButton:hover {
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: 
-    0 30px 70px rgba(0,255,255,0.7),
-    inset 0 0 25px rgba(255,255,255,0.5);
-}
-
-.audioNote {
-  color: #64748b;
-  font-size: 14px;
-  margin-top: 24px;
-  font-style: italic;
-}
-
-/* Alerta Overlay */
 .overlayAlerta {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(25px);
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2917,105 +3643,112 @@ export default App;
   animation: alertSlide 0.3s ease;
 }
 
-@keyframes alertSlide {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
 .boxAlerta {
-  background: linear-gradient(135deg, rgba(220, 38, 127, 0.95), rgba(139, 92, 246, 0.95));
-  backdrop-filter: blur(40px);
-  border-radius: 32px;
-  padding: 60px 80px;
-  max-width: 600px;
+  background: linear-gradient(135deg, #7e22ce, #4c1d95);
+  border-radius: 28px;
+  padding: 40px 60px;
+  max-width: 550px;
   width: 90%;
   text-align: center;
   position: relative;
-  border: 2px solid rgba(255,255,255,0.3);
-  box-shadow: 
-    0 60px 120px rgba(0,0,0,0.95),
-    0 0 100px rgba(220,38,127,0.6);
-  animation: alertPulse 0.6s ease-in-out infinite alternate;
-}
-
-@keyframes alertPulse {
-  0% { box-shadow: 0 60px 120px rgba(0,0,0,0.95), 0 0 100px rgba(220,38,127,0.6); }
-  100% { box-shadow: 0 70px 140px rgba(0,0,0,1), 0 0 120px rgba(220,38,127,0.8); }
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .closeAlertBtn {
   position: absolute;
-  top: 20px; right: 24px;
-  background: rgba(255,255,255,0.2);
-  border: 1px solid rgba(255,255,255,0.4);
+  top: 16px; right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
   border-radius: 50%;
-  width: 44px; height: 44px;
+  width: 32px; height: 32px;
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.closeAlertBtn:hover {
-  background: rgba(255,255,255,0.4);
-  transform: scale(1.1) rotate(90deg);
 }
 
 .tituloAlerta {
   font-family: 'Orbitron', monospace;
-  font-size: 32px;
-  font-weight: 900;
+  font-size: 22px;
+  font-weight: 700;
   color: white;
-  margin: 0 0 24px 0;
-  text-shadow: 
-    0 0 20px rgba(255,255,255,0.8),
-    2px 2px 0 rgba(0,0,0,0.5);
-  letter-spacing: 2px;
+  margin: 0 0 16px 0;
 }
 
-.mensagemAlerta {
-  font-size: 20px;
-  color: #f8fafc;
-  margin: 0;
-  line-height: 1.6;
-  font-weight: 600;
-}
+.mensagemAlerta { font-size: 16px; color: #f1f5f9; margin: 0; }
 
-/* Footer Info */
 .footerInfo {
   text-align: center;
-  padding: 24px;
-  color: #64748b;
-  font-size: 14px;
-  font-family: 'Orbitron', monospace;
-  letter-spacing: 1px;
+  padding: 12px;
+  color: #475569;
+  font-size: 11px;
+  font-family: monospace;
 }
 
-.refreshTime {
-  color: #00ffff;
-  font-weight: 800;
-  text-shadow: 0 0 15px rgba(0,255,255,0.5);
-}
+.refreshTime { color: #38bdf8; }
 
-/* Responsivo */
-@media (max-width: 1200px) {
-  .cyberLayout { padding: 20px; }
-  .statsGrid { grid-template-columns: repeat(2, 1fr); }
-  .atendentesCards { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+/* Responsivo - Em telas menores, sidebar vai para cima */
+@media (max-width: 900px) {
+  .layoutContainer {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+  }
+  
+  .teamSidebar {
+    position: relative;
+    top: 0;
+  }
+  
+  .atendentesList {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .atendenteItem {
+    flex: 1;
+    min-width: 160px;
+  }
 }
 
 @media (max-width: 768px) {
-  .cyberLayout { padding: 16px; }
-  .heroCard { padding: 32px 24px; border-radius: 24px; }
-  .heroTitle { font-size: 32px; }
-  .statValue { font-size: 36px; }
-  .teamSection { padding: 24px; }
-  .atendentesCards { grid-template-columns: 1fr; }
-  .highlightHeader { padding: 24px 28px; flex-direction: column; gap: 16px; text-align: center; }
-  .audioCard { padding: 40px 32px; }
+  .cyberLayout { padding: 12px; }
+  .heroTitle { font-size: 20px; }
+  .highlightHeader { padding: 14px 20px; flex-wrap: wrap; }
+  .highlightTitle { font-size: 18px; }
+  .highlightBadge { font-size: 16px; padding: 6px 16px; }
+  .statsGrid { gap: 20px; }
+}
+
+/* FORÇAR 100% DA LARGURA */
+html, body, #root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.cyberLayout {
+  width: 100%;
+  max-width: 100%;
+  padding: 16px 24px;
+}
+
+.layoutContainer {
+  width: 100%;
+  max-width: 100%;
+}
+
+.mainContent {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* A tabela também vai ocupar 100% */
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
 }
 </file>
 
@@ -3026,14 +3759,12 @@ export default function Tabela({ dados, titulo, variante, slaConfig }) {
     const getStatusClass = (task) => {
         if (variante !== 'aberto') return style.statusDefault;
         
-        switch(task.slaStatus) {
-            case 'critical': return style.statusCritical;
-            case 'warning': return style.statusWarning;
-            case 'normal': return style.statusNormal;
-            case 'dev': return style.statusDev;
-            case 'devCritical': return style.statusCritical;
-            default: return style.statusNormal;
-        }
+        // Prioridade: devCritical > critical > dev > warning > normal
+        if (task.slaStatus === 'devCritical') return style.statusCritical;
+        if (task.slaStatus === 'critical') return style.statusCritical;
+        if (task.slaStatus === 'dev') return style.statusDev;
+        if (task.slaStatus === 'warning') return style.statusWarning;
+        return style.statusNormal;
     };
 
     const getStatusText = (task) => {
@@ -3041,7 +3772,10 @@ export default function Tabela({ dados, titulo, variante, slaConfig }) {
             if (variante === 'andamento') return task.board_stage_name || 'Fazendo';
             return task.board_stage_name || 'Em andamento';
         }
-        return task.slaMessage || `🟢 Normal (${task.minutesOpen || 0}m)`;
+        
+        // Mostra o tempo de forma mais amigável
+        const timeDisplay = task.slaMessage || `🟢 Normal (${task.timeOpenFormatted || '0m'})`;
+        return timeDisplay;
     };
 
     const getHeaderGradient = () => {
@@ -3201,7 +3935,7 @@ const isTicketFromToday = (createdAt) => {
            ticketDate.getFullYear() === today.getFullYear();
 };
 
-// Função para calcular tempo útil (horário comercial)
+// Função para calcular tempo útil (horário comercial 8h-18h, Segunda a Sexta)
 const calcularMinutosUteis = (dataInicio) => {
     const inicio = new Date(dataInicio);
     const agora = new Date();
@@ -3211,35 +3945,33 @@ const calcularMinutosUteis = (dataInicio) => {
     let totalMinutos = 0;
     let current = new Date(inicio);
     
-    const inicioExpediente = 8;
-    const fimExpedienteSegQui = 18;
-    const fimExpedienteSex = 17;
+    const inicioExpediente = 8;  // 8:00
+    const fimExpediente = 18;     // 18:00
     
-    while (current < agora) {
-        const diaSemana = current.getDay();
+    // Arredonda para o minuto atual
+    current.setSeconds(0, 0);
+    const agoraArredondado = new Date(agora);
+    agoraArredondado.setSeconds(0, 0);
+    
+    while (current < agoraArredondado) {
+        const diaSemana = current.getDay(); // 0 = Domingo, 6 = Sábado
         const hora = current.getHours();
-        const minutos = current.getMinutes();
         
+        // Segunda a Sexta (1 a 5)
         if (diaSemana >= 1 && diaSemana <= 5) {
-            const fimExpediente = (diaSemana === 5) ? fimExpedienteSex : fimExpedienteSegQui;
-            
+            // Dentro do horário comercial
             if (hora >= inicioExpediente && hora < fimExpediente) {
-                const minutosNoDia = (hora * 60 + minutos);
-                const fimExpedienteMinutos = fimExpediente * 60;
-                
-                if (minutosNoDia < fimExpedienteMinutos) {
-                    const minutosRestantesNoDia = fimExpedienteMinutos - minutosNoDia;
-                    const minutosAteAgora = Math.min(minutosRestantesNoDia, (agora - current) / (1000 * 60));
-                    totalMinutos += minutosAteAgora;
-                }
+                totalMinutos++;
             }
         }
         
-        current = new Date(current.getTime() + 60000);
+        // Avança 1 minuto
+        current.setMinutes(current.getMinutes() + 1);
     }
     
     return totalMinutos;
 };
+
 
 export default function Main({ slaConfig }) {
     const [tasks, setTasks] = useState([]);
@@ -3335,13 +4067,14 @@ export default function Main({ slaConfig }) {
                     task.timeOpenFormatted = formatMinutes(minutesDiff);
                     
                     if (task.board_stage_name === "A fazer" || task.board_stage_name === "Em aprovação") {
-                        if (minutesDiff <= slaConfig.supportTakeoverTime) {
+                        // SLA: 15min para assumir, 45min para resolver (horário comercial)
+                        if (minutesDiff <= 15) {
                             task.slaStatus = 'normal';
                             task.slaMessage = `🟢 Normal (${formatSlaTime(minutesDiff)})`;
-                        } else if (minutesDiff <= slaConfig.supportWarningTime) {
+                        } else if (minutesDiff <= 30) {
                             task.slaStatus = 'warning';
                             task.slaMessage = `🟡 Atenção (${formatSlaTime(minutesDiff)})`;
-                        } else if (minutesDiff <= slaConfig.supportResolutionTime) {
+                        } else if (minutesDiff <= 45) {
                             task.slaStatus = 'critical';
                             task.slaMessage = `🔴 URGENTE (${formatSlaTime(minutesDiff)})`;
                         } else {
@@ -3389,30 +4122,40 @@ export default function Main({ slaConfig }) {
         if (saved === 'true') setAudioPermissionGranted(true);
     }, []);
 
-    // FILTROS
+    // ============================================
+    // CORREÇÃO 1: REMOVIDO FILTRO DE DIAS DOS TICKETS EM SLA
+    // Agora mostra TODOS os tickets em "A fazer/Em aprovação"
+    // ============================================
     const ticketsAbertos = useMemo(() => {
-        const diasAtras = new Date();
-        diasAtras.setDate(diasAtras.getDate() - slaConfig.openTicketsDays);
+        // SEM filtro de dias - mostra todos os tickets em SLA
         return tasks.filter(t => 
-            (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação") &&
-            new Date(t.created_at) >= diasAtras
+            (t.board_stage_name === "A fazer" || t.board_stage_name === "Em aprovação")
         );
-    }, [tasks, slaConfig.openTicketsDays]);
+    }, [tasks]);
 
     const ticketsAndamento = useMemo(() => 
         tasks.filter(t => t.board_stage_name === "Fazendo"), [tasks]);
 
+    // ============================================
+    // CORREÇÃO 2: FINALIZADOS HOJE - Conta apenas tickets com close_date igual a hoje
+    // ============================================
     const ticketsFinalizados = useMemo(() => {
-        const diasAtras = new Date();
-        diasAtras.setDate(diasAtras.getDate() - slaConfig.finishedDays);
+        const hoje = new Date();
+        const inicioHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
+        const fimHoje = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
+        
         return tasks.filter(t => {
             const isEntregue = String(t.board_stage_name).toLowerCase() === "entregues" || t.is_closed === true;
             if (!isEntregue) return false;
-            if (t.close_date) return new Date(t.close_date) >= diasAtras;
-            if (t.updated_at) return new Date(t.updated_at) >= diasAtras;
+            
+            // Usar close_date para saber quando foi finalizado
+            const closeDate = t.close_date ? new Date(t.close_date) : null;
+            if (closeDate) {
+                return closeDate >= inicioHoje && closeDate <= fimHoje;
+            }
             return false;
         });
-    }, [tasks, slaConfig.finishedDays]);
+    }, [tasks]);
 
     // Alertas SLA
     useEffect(() => {
@@ -3463,34 +4206,91 @@ export default function Main({ slaConfig }) {
             .sort((a, b) => b.total - a.total);
     }, [ticketsAndamento, ticketsFinalizados]);
 
-    return (
+        return (
         <main className={`${style.layout} ${style.cyberLayout}`}>
-            {/* HERO CYBERPUNK */}
-            <section className={style.heroSection}>
-                <div className={style.heroCard}>
-                    <div className={style.heroContent}>
-                        
-                        <h1 className={style.heroTitle}>Painel de Suporte SLA</h1>
-                        <p className={style.heroSubtitle}>Monitoramento em Tempo Real • Alertas Inteligentes • SLAs Automáticos</p>
-                        <div className={style.statsGrid}>
-                            <div className={style.statCard}>
-                                <span className={style.statValue}>{ticketsAbertos.length}</span>
-                                <span className={style.statLabel}>Tickets Críticos</span>
-                            </div>
-                            <div className={style.statCard}>
-                                <span className={style.statValue}>{ticketsAndamento.length}</span>
-                                <span className={style.statLabel}>Em Andamento</span>
-                            </div>
-                            <div className={style.statCard}>
-                                <span className={style.statValue}>{ticketsFinalizados.length}</span>
-                                <span className={style.statLabel}>Finalizados Hoje</span>
-                            </div>
+            <div className={style.layoutContainer}>
+                {/* SIDEBAR - TIME ATIVO NA LATERAL */}
+                <aside className={style.sidebar}>
+                    <div className={style.teamSidebar}>
+                        <div className={style.sidebarHeader}>
+                            <h3 className={style.sidebarTitle}>👥 TIME ATIVO</h3>
+                            <span className={style.sidebarBadge}>Real-time</span>
+                        </div>
+                        <div className={style.atendentesList}>
+                            {dadosParaExibir.map((atendente) => (
+                                <div key={atendente.nome} className={style.atendenteItem}>
+                                    <div className={style.atendenteAvatarSidebar}>
+                                        {atendente.nome.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className={style.atendenteInfoSidebar}>
+                                        <div className={style.atendenteNomeSidebar}>{atendente.nome}</div>
+                                        <div className={style.atendenteStatsSidebar}>
+                                            <span className={`${style.statBadgeSidebar} ${style.andamentoSidebar}`}>
+                                                ⚙️ {atendente.em_andamento}
+                                            </span>
+                                            <span className={`${style.statBadgeSidebar} ${style.finalizadoSidebar}`}>
+                                                ✅ {atendente.finalizados}
+                                            </span>
+                                            <span className={`${style.statBadgeSidebar} ${style.totalSidebar}`}>
+                                                📊 {atendente.total}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </aside>
 
-            {/* Modal de áudio FUTURISTA */}
+                {/* CONTEÚDO PRINCIPAL */}
+                <div className={style.mainContent}>
+                    {/* HERO CYBERPUNK */}
+                    <section className={style.heroSection}>
+                        <div className={style.heroCard}>
+                            <div className={style.heroContent}>
+                                <h1 className={style.heroTitle}>Painel de Suporte SLA</h1>
+                                <p className={style.heroSubtitle}>Monitoramento em Tempo Real • Alertas Inteligentes • SLAs Automáticos</p>
+                                <div className={style.statsGrid}>
+                                    <div className={style.statCard}>
+                                        <span className={style.statValue}>{ticketsAbertos.length}</span>
+                                        <span className={style.statLabel}>Tickets Críticos</span>
+                                    </div>
+                                    <div className={style.statCard}>
+                                        <span className={style.statValue}>{ticketsAndamento.length}</span>
+                                        <span className={style.statLabel}>Em Andamento</span>
+                                    </div>
+                                    <div className={style.statCard}>
+                                        <span className={style.statValue}>{ticketsFinalizados.length}</span>
+                                        <span className={style.statLabel}>Finalizados Hoje</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SEÇÃO PRINCIPAL - TICKETS EM SLA */}
+                    <section className={style.mainSection}>
+                        <div className={style.highlightHeader}>
+                            <div className={style.highlightIcon}>🎯</div>
+                            <div className={style.highlightText}>
+                                <div className={style.highlightTitle}>TICKETS EM SLA</div>
+                                <div className={style.highlightSub}>Prioridade máxima - Assuma agora!</div>
+                            </div>
+                            <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
+                        </div>
+                        <div className={style.tableContainer}>
+                            <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
+                        </div>
+                    </section>
+
+                    {/* INFO DE ATUALIZAÇÃO */}
+                    <div className={style.footerInfo}>
+                        🕐 Última sincronização: <span className={style.refreshTime}>{lastRefresh.toLocaleTimeString('pt-BR')}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modais (mantidos fora do layout principal) */}
             {!audioPermissionGranted && (
                 <div className={style.audioModal}>
                     <div className={style.audioCard}>
@@ -3507,7 +4307,6 @@ export default function Main({ slaConfig }) {
                 </div>
             )}
 
-            {/* Alerta visual NEON */}
             {alerta && (
                 <div className={style.overlayAlerta}>
                     <div className={style.boxAlerta}>
@@ -3532,62 +4331,10 @@ export default function Main({ slaConfig }) {
                     </div>
                 </div>
             )}
-
-            {/* CARDS ATENDENTES CYBERPUNK */}
-            {dadosParaExibir.length > 0 && (
-                <section className={style.teamSection}>
-                    <div className={style.sectionHeader}>
-                        <h3 className={style.sectionTitle}>👥 Time Ativo</h3>
-                        <span className={style.sectionBadge}>Real-time</span>
-                    </div>
-                    <div className={style.atendentesCards}>
-                        {dadosParaExibir.map((atendente) => (
-                            <div key={atendente.nome} className={style.atendenteCard}>
-                                <div className={style.atendenteAvatar}>
-                                    {atendente.nome.charAt(0).toUpperCase()}
-                                </div>
-                                <div className={style.atendenteInfo}>
-                                    <div className={style.atendenteNome}>{atendente.nome}</div>
-                                    <div className={style.atendenteStats}>
-                                        <span className={`${style.statBadge} ${style.andamento}`}>
-                                            ⚙️ {atendente.em_andamento}
-                                        </span>
-                                        <span className={`${style.statBadge} ${style.finalizado}`}>
-                                            ✅ {atendente.finalizados}
-                                        </span>
-                                        <span className={`${style.statBadge} ${style.total}`}>
-                                            📊 {atendente.total}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* SEÇÃO PRINCIPAL - TICKETS ABERTOS */}
-            <section className={style.mainSection}>
-                <div className={style.highlightHeader}>
-                    <div className={style.highlightIcon}>🎯</div>
-                    <div>
-                        <div className={style.highlightTitle}>TICKETS EM SLA</div>
-                        <div className={style.highlightSub}>Prioridade máxima - Assuma agora!</div>
-                    </div>
-                    <div className={style.highlightBadge}>{ticketsAbertos.length} ativos</div>
-                </div>
-                <div className={style.tableContainer}>
-                    <Tabela dados={ticketsAbertos} titulo="" variante="aberto" slaConfig={slaConfig} />
-                </div>
-            </section>
-
-            {/* INFO DE ATUALIZAÇÃO NEON */}
-            <div className={style.footerInfo}>
-                🕐 Última sincronização: <span className={style.refreshTime}>{lastRefresh.toLocaleTimeString('pt-BR')}</span>
-            </div>
         </main>
     );
 }
+
 /*
 vercel --prod
 */
